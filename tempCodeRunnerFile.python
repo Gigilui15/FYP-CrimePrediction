@@ -1,0 +1,70 @@
+import os
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+import matplotlib.cm as cm
+from sqlalchemy import create_engine
+
+# Function to create directory if it doesn't exist
+def create_directory(directory):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+# Connection and Error Handling for Postgres DB
+try:
+    # Connect to your PostgreSQL database using SQLAlchemy
+    engine = create_engine('postgresql://postgres:spiderman@localhost:5432/FYP')
+
+    # Modify the query to include month_name and crime_description columns, and order by area
+    query = "SELECT year, crime_description, area, EXTRACT(MONTH FROM date_column) AS month, COUNT(*) AS crime_count FROM aggregated_crime_dataset WHERE year BETWEEN 2010 AND 2018 GROUP BY year, crime_description, area, month ORDER BY area, year, crime_count DESC;"
+
+    # Fetch the data from the database using Pandas
+    df = pd.read_sql(query, engine)
+
+    # Define colors for plotting using colormap
+    color_cycle = cm.tab10.colors
+
+    # Create an empty DataFrame to store predicted counts
+    predicted_df = pd.DataFrame(columns=['Year', 'Month', 'Area', 'crime_category', 'crime_count'])
+
+    # Plotting and Predictions
+    for area in df['area'].unique():
+        area_data = df[df['area'] == area]
+
+        # Plot Observed Data and Trend Lines, and make predictions for each month
+        plt.figure(figsize=(14, 8))  # Larger image size
+        for idx, crime_description in enumerate(sorted(area_data['crime_description'].unique())):
+            crime_data = area_data[area_data['crime_description'] == crime_description]
+            color = color_cycle[idx % len(color_cycle)]  # Loop over colors
+            plt.plot(crime_data['year'], crime_data['crime_count'], label=crime_description, color=color)
+
+            # Fit a polynomial regression line (degree 1) to the data points
+            z = np.polyfit(crime_data['year'], crime_data['crime_count'], 1)
+            p = np.poly1d(z)
+            trend_line_color = color  # Store the color of the trend line
+            plt.plot(crime_data['year'], p(crime_data['year']), '--', color=trend_line_color)  # Dotted trend line
+
+            # Extend the trend line to 2019
+            plt.plot([crime_data['year'].iloc[-1], 2019], [p(crime_data['year'].iloc[-1]), p(2019)], '--', color=trend_line_color)
+
+            # Generate predictions for each month in 2019
+            for month in range(1, 13):
+                predicted_count_month = p(2019 + month/12)  # Add fraction of month
+                predicted_df = predicted_df.append({'Year': 2019, 'Month': month, 'Area': area, 'crime_category': crime_description, 'crime_count': predicted_count_month}, ignore_index=True)
+
+    # Display the predicted DataFrame
+    print(predicted_df)
+
+    # Save the results to the PostgreSQL table using SQLAlchemy
+    predicted_df.to_sql('Polynomial_Regression_Predictions_2019', engine, if_exists='replace', index=False)
+
+    # Show the plot
+    plt.legend()
+    plt.title('Crime Trends and Predictions by Area')
+    plt.xlabel('Year')
+    plt.ylabel('Crime Count')
+    plt.grid(True)
+    plt.show()
+
+except Exception as error:
+    print("Error:", error)
