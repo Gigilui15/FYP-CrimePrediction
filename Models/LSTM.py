@@ -6,9 +6,25 @@ from sklearn.preprocessing import MinMaxScaler
 from keras.models import Sequential
 from keras.layers import LSTM, Dense
 from keras import backend as K
+import tensorflow as tf
 
 # Set GPU device (optional)
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
+
+# Check GPU availability
+print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
+
+# Configure Keras to use TensorFlow backend
+os.environ['KERAS_BACKEND'] = 'tensorflow'
+
+# Allow GPU memory growth
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    try:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+    except RuntimeError as e:
+        print(e)
 
 # Load the dataset
 train_data = pd.read_csv(r'C:\\Users\\luigi\\Desktop\\Third Year\\Thesis\\Artefact\\TrainTestSplit\\train_set.csv')
@@ -50,7 +66,7 @@ model.compile(optimizer='adam', loss='mean_squared_error')
 print("Backend Device:", K.backend())
 
 # Train the model
-model.fit(X_train, y_train, epochs=100, batch_size=32)
+model.fit(X_train, y_train, epochs=1000, batch_size=32)
 
 # Load the test dataset
 test_data = pd.read_csv(r'C:\\Users\\luigi\\Desktop\\Third Year\\Thesis\\Artefact\\TrainTestSplit\\test_set.csv')
