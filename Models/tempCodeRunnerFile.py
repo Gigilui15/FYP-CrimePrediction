@@ -1,1 +1,2 @@
-r'C:\\Users\\luigi\\Desktop\\Third Year\\Thesis\\Artefact\\TrainTestSplit\\train_set.csv'
+
+    'n_estimators': [200, 400, 600, 800, 1000, 1200, 1
