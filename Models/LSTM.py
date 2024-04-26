@@ -1,66 +1,160 @@
-import pandas as pd
+# %% [markdown]
+# Trying to Implement an LSTM for one Agg_id
+
+# %%
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
+import pandas as pd
+import tensorflow as tf
+from matplotlib import pyplot as plt
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras.layers import LSTM
+from tensorflow.keras.layers import Dense, Dropout
+from sklearn.preprocessing import MinMaxScaler
+from keras.wrappers.scikit_learn import KerasRegressor
+from sklearn.model_selection import GridSearchCV
+from keras.preprocessing.sequence import TimeseriesGenerator
+from sklearn.model_selection import train_test_split
+from statsmodels.tsa.seasonal import seasonal_decompose
+from math import sqrt
+from sklearn.metrics import mean_squared_error
 
-# Define hyperparameters
-nodes = 67
-dense_units = 10
-dropout = 0.41856136469948013
-learning_rate = 0.41856136469948013
-momentum = 0.5369234907053951
-batch_size = 32
-seed = 18
-epochs = 10
+# Load the data
+train_set = pd.read_csv('C:\\Users\\luigi\\Desktop\\Third Year\\Thesis\\Artefact\\test.csv')
 
-# Hyperparameters for optimizer and activation function
-optimizer_name = 'sgd' 
-activation_function = 'tanh'  
+# Create a DateTime attribute from 'year' and 'month' columns
+train_set['Date'] = pd.to_datetime(train_set[['year', 'month']].assign(day=1))
 
-# Load the dataset
-dataset = pd.read_csv('C:\\Users\\luigi\\Desktop\\Third Year\\Thesis\\Artefact\\TrainTestSplit\\train_set_ordered.csv')
+# Drop 'year' and 'month' columns if you don't need them anymore
+train_set.drop(['year', 'month', 'agg_id', 'area'], axis=1, inplace=True)
 
-# Extract features and target variable
-X = dataset[['area', 'year', 'month', 'agg_id']].values
-y = dataset['total_crimes'].values
+# Sort the DataFrame by the DateTime attribute
+train_set.sort_values(by='Date', inplace=True)
 
-# Normalize features
-scaler_X = MinMaxScaler()
-X_scaled = scaler_X.fit_transform(X)
+#Set the Frequency of the data to Monthly
+train_set.index.freq='MS'
 
-# Normalize target variable
-scaler_y = MinMaxScaler()
-y_scaled = scaler_y.fit_transform(y.reshape(-1, 1))
+# Set the 'Date' column as the index
+train_set.set_index('Date', inplace=True)
 
-# Reshape input to be 3D [samples, timesteps, features]
-X_reshaped = X_scaled.reshape((X_scaled.shape[0], 1, X_scaled.shape[1]))
+# %%
+#Loading the test set
+# Load the data
+test_set = pd.read_csv('C:\\Users\\luigi\\Desktop\\Third Year\\Thesis\\Artefact\\test_t.csv')
 
-# Define the LSTM model
+# Create a DateTime attribute from 'year' and 'month' columns
+test_set['Date'] = pd.to_datetime(test_set[['year', 'month']].assign(day=1))
+
+# Drop 'year' and 'month' columns if you don't need them anymore
+test_set.drop(['year', 'month', 'agg_id', 'area'], axis=1, inplace=True)
+
+# Sort the DataFrame by the DateTime attribute
+test_set.sort_values(by='Date', inplace=True)
+
+#Set the Frequency of the data to Monthly
+test_set.index.freq='MS'
+
+# Set the 'Date' column as the index
+test_set.set_index('Date', inplace=True)
+
+# %%
+train_set.head()
+
+# %%
+test_set.head()
+
+# %%
+train_set.plot(figsize=(12, 6))
+
+# %%
+results = seasonal_decompose(train_set['total_crimes'])
+results.plot()
+
+# %%
+len(train_set)
+
+# %%
+train = train_set
+test = test_set
+
+# %%
+scaler = MinMaxScaler()
+
+# %%
+scaler.fit(train)
+scaled_train = scaler.transform(train)
+scaled_test = scaler.transform(test)
+
+# %%
+scaled_train[:10]
+
+# %%
+n_input = 12
+n_features = 1
+generator = TimeseriesGenerator(scaled_train, scaled_train, length=n_input, batch_size=1)
+
+# %%
+X,y = generator[0]
+print(f'Given the Array: \n{X.flatten()}')
+print(f'Predict: \n{y}')
+
+# %%
+X.shape
+
+# %%
 model = Sequential()
-model.add(LSTM(nodes, activation=activation_function, input_shape=(1, X_scaled.shape[1]), dropout=dropout))  # Include dropout here
-model.add(Dense(dense_units))
-model.compile(optimizer=optimizer, loss='mse')
+model.add(LSTM(100, activation='relu', input_shape=(n_input, n_features)))
+model.add(Dense(1))
+model.compile(optimizer='adam', loss='mse')
 
-# Accessing hyperparameters and attributes directly
-print("\nNumber of LSTM units:", model.layers[0].units)
-print("Activation function:", activation_function)
-print("Optimizer:", optimizer)
-print("Learning rate:", model.optimizer.learning_rate.numpy())  # Assuming it's a TensorFlow optimizer
-print("Loss function:", model.loss)
+model.summary()
 
-# Print additional parameters
-print("Dropout:", dropout)
-print("Batch size:", batch_size)
-print("Seed:", seed)
-print("Epochs:", epochs ,"\n")
+# %%
+#fit the model
+model.fit(generator, epochs=50)
 
-# Set the random seed
-np.random.seed(seed)
+# %%
+loss_per_epoch = model.history.history['loss']
+plt.plot(range(len(loss_per_epoch)), loss_per_epoch)
 
-# Fit the model
-model.fit(X_reshaped, y_scaled, epochs=epochs, batch_size=batch_size, verbose=1)
+# %%
+last_train_batch = scaled_train[-12:]
 
-# Save the model
-model.save('lstm_model.h5')
-#0.03308010473847389 and parameters: {'nodes': 67, 'dense_units': 10, 'dropout': 0.41856136469948013, 'learning_rate': 0.41856136469948013, 'momentum': 0.5369234907053951, 'batch_size': 32, 'seed': 18, 'epochs': 23, 'optimizer_name': 'sgd', 'activation_function': 'tanh'}. Best is trial 1 with value: 0.03308010473847389.
+last_train_batch = last_train_batch.reshape((1, n_input, n_features))
+
+# %%
+model.predict(last_train_batch)
+
+# %%
+scaled_test[0]
+
+# %%
+test_predictions = []
+
+first_eval_batch = scaled_train[-n_input:]
+current_batch = first_eval_batch.reshape((1, n_input, n_features))
+
+for i in range(len(test)):
+    #get the prediction value for the first batch
+    current_pred = model.predict(current_batch)[0]
+    
+    #append the prediction into the array
+    test_predictions.append(current_pred)
+    
+    #use the prediction to update the batch and remove the first value
+    current_batch = np.append(current_batch[:,1:,:],[[current_pred]],axis=1)
+
+# %%
+test_predictions
+
+# %%
+true_predictions = scaler.inverse_transform(test_predictions)
+test['Predictions'] = true_predictions
+
+# %%
+test.plot(figsize=(12,6))
+
+# %%
+rmse=sqrt(mean_squared_error(test['total_crimes'],test['Predictions']))
+print(rmse)
+
+
