@@ -10,6 +10,8 @@ from tensorflow.keras.models import load_model
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
 
+np.random.seed(46)
+
 # Load your data
 data = pd.read_csv('C:\\Users\\luigi\\Desktop\\Third Year\\Thesis\\Artefact\\Data\\train_set.csv', header=0)
 data.columns = ['Area', 'Year', 'Month', 'Crime_Category', 'Total_Crimes']
