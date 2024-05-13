@@ -77,32 +77,55 @@ function init() {
         return false;
     }
 
-    // Add event listener to handle radio button changes
+    window.onload = function() {
+        // Initialize checkboxes based on the "All Crimes" radio button state
+        let allCrimesRadio = document.getElementById('all');
+        let crimeCheckboxes = document.querySelectorAll('input[type="checkbox"][name="filter"]');
+        if (allCrimesRadio.checked) {
+            // If "All Crimes" is initially checked, disable checkboxes
+            crimeCheckboxes.forEach(checkbox => {
+                checkbox.disabled = true;
+            });
+        } else {
+            // Enable checkboxes if "All Crimes" is not checked
+            crimeCheckboxes.forEach(checkbox => {
+                checkbox.disabled = false;
+            });
+        }
+        init(); // Initialize the map and other components
+    };    
+
     document.getElementById('filter-options').addEventListener('change', function(event) {
-        if (event.target && event.target.matches('input[type="radio"][name="filter"]')) {
-            var filterValue = event.target.value;
-            updateLayerFilter(filterValue);
+        // If a checkbox is changed
+        if (event.target.matches('input[type="checkbox"][name="filter"]')) {
+            // If any checkbox is checked, uncheck the "All Crimes" radio
+            document.getElementById('all').checked = !Array.from(document.querySelectorAll('input[type="checkbox"][name="filter"]:checked')).length;
+            updateMultipleFilters();
+        }
+        // If the "All Crimes" radio is changed
+        if (event.target.matches('input[type="radio"][name="filter"]') && event.target.value === 'all') {
+            // Uncheck all checkboxes without disabling them
+            document.querySelectorAll('input[type="checkbox"][name="filter"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            updateLayerFilter('all');
         }
     });
-
-    // Function to update layer filter based on selected radio button
-    function updateLayerFilter(filterValue) {
-        var filterCondition;
-        // Define filter condition based on the selected value
-        if (filterValue === 'all') {
-            // Show all crimes
-            filterCondition = null; // No filter condition
-        } else {
-            // Show only crimes with the selected agg_des value
-            filterCondition = "agg_des = '" + filterValue + "'";
-        }
-        // Update the layer source params with the new filter condition
-        Crimes.getSource().updateParams({
-            'CQL_FILTER': filterCondition
-        });
-        // Refresh the layer to apply the new filter
+    
+    // Function to update the map based on multiple selected filters
+    function updateMultipleFilters() {
+        let selectedFilters = Array.from(document.querySelectorAll('input[type="checkbox"][name="filter"]:checked')).map(el => el.value);
+        let filterCondition = selectedFilters.length ? selectedFilters.map(filter => "agg_des = '" + filter + "'").join(' OR ') : 'all';
+        updateLayerFilter(filterCondition);
+    }
+    
+    // Function to apply the filter to the map layer
+    function updateLayerFilter(filterCondition) {
+        let CQL_FILTER = filterCondition === 'all' ? null : filterCondition;
+        Crimes.getSource().updateParams({'CQL_FILTER': CQL_FILTER});
         Crimes.getSource().refresh();
     }
+    
 
     map.on('singleclick', function(evt) {
         if(featureInfoFlag){

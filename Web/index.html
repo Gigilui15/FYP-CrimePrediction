@@ -18,38 +18,37 @@
             <div class="toc">
                 <div id="filter-options" style="font-size: small;">
                     <h3>Crimes</h3>
-                    <!-- Hardcoding filters for faster generation-->
-                    <input type="radio" id="all" name="filter" value="all" checked>
-                    <label for="all">All Crimes</label>
+                    <input type="radio" id="all" name="filter" value="all" onclick="updateLayerFilter('all');" checked>
+                    <label for="all">All Crimes</label>                    
                     <br>
-                    <input type="radio" id="Aggrevated Assault" name="filter" value="Aggrevated Assault">
-                    <label for="Aggrevated Assault">Aggrevated Assault</label>
+                    <input type="checkbox" id="Aggrevated Assault" name="filter" value="Aggrevated Assault">
+                    <label for="Aggrevated Assault">Aggravated Assault</label>
                     <br>
-                    <input type="radio" id="Burglary" name="filter" value="Burglary">
+                    <input type="checkbox" id="Burglary" name="filter" value="Burglary">
                     <label for="Burglary">Burglary</label>
                     <br>
-                    <input type="radio" id="Damage of Asset" name="filter" value="Damage of Asset">
-                    <label for="Damage of Asset">Damage of Asset</label>
+                    <input type="checkbox" id="DamageOfAsset" name="filter" value="Damage of Asset">
+                    <label for="DamageOfAsset">Damage of Asset</label>
                     <br>
-                    <input type="radio" id="Identity Theft" name="filter" value="Identity Theft">
+                    <input type="checkbox" id="Identity Theft" name="filter" value="Identity Theft">
                     <label for="Identity Theft">Identity Theft</label>
                     <br>
-                    <input type="radio" id="Property Crimes/Theft" name="filter" value="Property Crimes/Theft">
+                    <input type="checkbox" id="Property Crimes/Theft" name="filter" value="Property Crimes/Theft">
                     <label for="Property Crimes/Theft">Property Crimes</label>
                     <br>
-                    <input type="radio" id="Robbery" name="filter" value="Robbery">
+                    <input type="checkbox" id="Robbery" name="filter" value="Robbery">
                     <label for="Robbery">Robbery</label>
                     <br>
-                    <input type="radio" id="Simple Assault" name="filter" value="Simple Assault">
+                    <input type="checkbox" id="Simple Assault" name="filter" value="Simple Assault">
                     <label for="Simple Assault">Simple Assault</label>
                     <br>
-                    <input type="radio" id="theft" name="filter" value="Theft">
+                    <input type="checkbox" id="theft" name="filter" value="Theft">
                     <label for="theft">Theft</label>
                     <br>
-                    <input type="radio" id="Threats & Scares" name="filter" value="Threats & Scares">
+                    <input type="checkbox" id="Threats & Scares" name="filter" value="Threats & Scares">
                     <label for="Threats & Scares">Threats & Scares</label>
                     <br>
-                    <input type="radio" id="Violation of Restraining/Court Order" name="filter" value="Violation of Restraining/Court Order">
+                    <input type="checkbox" id="Violation of Restraining/Court Order" name="filter" value="Violation of Restraining/Court Order">
                     <label for="Violation of Restraining/Court Order">Violation of Restraining/Court Order</label>
                 </div>
                 
