@@ -77,6 +77,25 @@ function init() {
         return false;
     }
 
+    function initSlider() {
+        var slider = document.getElementById('year-slider');
+        noUiSlider.create(slider, {
+            start: [2010, 2020], // Initial range
+            connect: true,
+            range: {
+                'min': 2010,
+                'max': 2020
+            },
+            step: 1,
+            tooltips: [wNumb({decimals: 0}), wNumb({decimals: 0})]
+        });
+    
+        slider.noUiSlider.on('update', function(values) {
+            updateCrimeLayers(values[0], values[1]);
+        });
+    }
+    
+
     window.onload = function() {
         // Initialize checkboxes based on the "All Crimes" radio button state
         let allCrimesRadio = document.getElementById('all');
@@ -93,7 +112,14 @@ function init() {
             });
         }
         init(); // Initialize the map and other components
-    };    
+    };   
+    
+    function updateLayerFilterByYear(yearRange) {
+        // Assuming you have a function to update the map layer based on selected years
+        var filterCondition = `year >= ${yearRange[0]} AND year <= ${yearRange[1]}`;
+        Crimes.getSource().updateParams({'CQL_FILTER': filterCondition});
+    }
+    
 
     document.getElementById('filter-options').addEventListener('change', function(event) {
         // If a checkbox is changed

@@ -6,6 +6,8 @@
     <link rel="stylesheet" href="./style.css">
     <link rel="stylesheet" href="./libs/dist/ol.css">
     <link rel="stylesheet" href="./libs/dist/layerswitcher/dist/ol-ext.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/nouislider/distribute/nouislider.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/nouislider/distribute/nouislider.min.js"></script>
 </head>
 <body>
 
@@ -16,6 +18,9 @@
         </div>             
         <div class="left" style="color: white;">
             <div class="toc">
+                <div id="slider-container">
+                    <div id="year-slider"></div>
+                </div>                
                 <div id="filter-options" style="font-size: small;">
                     <h3>Crimes</h3>
                     <input type="radio" id="all" name="filter" value="all" onclick="updateLayerFilter('all');" checked>
@@ -67,7 +72,10 @@
             </div>
         </div>
     </div>
-    <script src="./main.js"></script>
+    <script src="./revised_main.js"></script>
+    <script src="./LayerControl.js"></script>
+    <script src="./PopupManager.js"></script>
+    <script src="./SearchManager.js"></script>
     <script src="./libs/dist/ol.js"></script>
     <script src="./libs/dist/layerswitcher/dist/ol-ext.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
