@@ -8,6 +8,7 @@ class GISMap {
         this.popupManager = new PopupManager(this.map); // Initialize PopupManager
         this.searchManager = new SearchManager(this.map, this.popupManager); // Initialize SearchManager
         this.addCustomControls();
+        this.addMousePositionControl();
     }
 
     initMap() {
@@ -54,6 +55,19 @@ class GISMap {
             groupSelectStyle: 'children'
         });
         this.map.addControl(layerSwitcher);
+    }
+
+    addMousePositionControl() {
+        const mousePositionControl = new ol.control.MousePosition({
+            coordinateFormat: function(coordinate) {
+                return `Lon: ${coordinate[0].toFixed(4)}   |   Lat: ${coordinate[1].toFixed(4)}`;
+            },
+            projection: 'EPSG:4326',
+            className: 'mouse-position',
+            target: document.getElementById('mouse-position'),
+            undefinedHTML: 'Longitude: -, Latitude: -'
+        });
+        this.map.addControl(mousePositionControl);
     }
 
     setupEventHandlers() {
