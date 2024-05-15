@@ -38,8 +38,10 @@ body {
     height: 100vh;
     background-color: #121735;
     box-shadow: 2px 2px 15px rgba(255, 255, 255, 0.8); 
+    max-height: 800vh;  /* or adjust to fit your design */
+    overflow-y: auto;  /* enables vertical scrolling */
+    overflow-x: hidden;  /* hides horizontal scrollbar */
 }
-
 
 .toc{
     margin-left: 10px;
@@ -362,7 +364,6 @@ body {
     text-align: center;
     display: flex;
     justify-content: space-between;
-    min-width: 200px; 
     z-index: 1000;
 }
 

@@ -138,8 +138,10 @@ class GISMap {
 
         return new ol.control.Control({ element: element });
     }
+
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const gisMap = new GISMap();
+    await gisMap.layerControl.createAreaCheckboxes(); // Ensure LayerControl has a reference to createAreaCheckboxes method
 });
