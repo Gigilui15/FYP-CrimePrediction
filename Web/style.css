@@ -1,10 +1,25 @@
+/* Existing styles for #js-map */
 #js-map {
-    position: absolute; 
-    top: 70;
-    bottom: 0;
-    right: 0;
-    left: 0; 
-    width: calc(100vw - 30vh); 
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+/* Ensure the heatmap canvas inherits these styles */
+.ol-layer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 1000; /* Set a high z-index to ensure it is on top */
+}
+
+.ol-layerswitcher {
+    top: 10px; /* Adjust this value as needed */
+    right: 10px; /* Adjust this value as needed */
+    left: auto !important; /* Override any left positioning */
+    bottom: auto !important; /* Override any bottom positioning */
+    position: absolute !important;
+    z-index: 2000; /* Ensure it is above other elements */
 }
 
 body {
@@ -36,11 +51,12 @@ body {
     grid-area: left;
     width: 30vh;
     height: 100vh;
-    background-color: #121735;
+    background-color: #ffffff;
     box-shadow: 2px 2px 15px rgba(255, 255, 255, 0.8); 
     max-height: 800vh;  /* or adjust to fit your design */
     overflow-y: auto;  /* enables vertical scrolling */
     overflow-x: hidden;  /* hides horizontal scrollbar */
+    padding-right: 20px;
 }
 
 .toc{
@@ -49,12 +65,13 @@ body {
 }
 
 .right {
-    width: calc(100% - (100vw - 30vh)); 
+    grid-area: right;
+    width: calc(100vw - 30vh); /* Full width minus the width of .left */
     height: 100vh;
     border: 5px slategrey;
     position: absolute;
     top: 0;
-    left: 30vh; 
+    left: 30vh; /* The width of .left */
 }
 
 .mousePosition{
@@ -367,3 +384,34 @@ body {
     z-index: 1000;
 }
 
+.toc{
+    padding: 15px;
+}
+
+.loading-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3); /* Semi-transparent grey */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Ensure it is above all other content */
+    visibility: hidden;
+}
+
+.spinner {
+    border: 16px solid #f3f3f3; /* Light grey */
+    border-top: 16px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
