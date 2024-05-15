@@ -6,7 +6,7 @@ class LayerControl {
 
     initEventListeners() {
         document.getElementById('filter-options').addEventListener('change', event => this.handleFilterChange(event));
-        document.getElementById('area-filter-options').addEventListener('change', event => this.updateFilters());
+        document.getElementById('area-filter-options').addEventListener('change', event => this.handleAreaFilterChange(event));
         document.getElementById('year-filter').addEventListener('change', event => this.updateFilters());
     }
 
@@ -14,10 +14,39 @@ class LayerControl {
         if (event.target.matches('input[type="checkbox"][name="filter"]')) {
             const allCrimesRadio = document.getElementById('all');
             allCrimesRadio.checked = false; // Uncheck "All Crimes"
+
+            // If no checkboxes are checked, check the "All Crimes" radio button
+            const anyCheckboxChecked = Array.from(document.querySelectorAll('input[type="checkbox"][name="filter"]')).some(checkbox => checkbox.checked);
+            if (!anyCheckboxChecked) {
+                allCrimesRadio.checked = true;
+            }
+
             this.updateFilters();
         } else if (event.target.matches('input[type="radio"][name="filter"]')) {
             if (event.target.value === 'all') {
                 document.querySelectorAll('input[type="checkbox"][name="filter"]').forEach(checkbox => {
+                    checkbox.checked = false; // Uncheck all checkboxes
+                });
+            }
+            this.updateFilters();
+        }
+    }
+
+    handleAreaFilterChange(event) {
+        if (event.target.matches('input[type="checkbox"][name="area-filter"]')) {
+            const allAreasRadio = document.getElementById('all-areas');
+            allAreasRadio.checked = false; // Uncheck "All Areas"
+
+            // If no checkboxes are checked, check the "All Areas" radio button
+            const anyCheckboxChecked = Array.from(document.querySelectorAll('input[type="checkbox"][name="area-filter"]')).some(checkbox => checkbox.checked);
+            if (!anyCheckboxChecked) {
+                allAreasRadio.checked = true;
+            }
+
+            this.updateFilters();
+        } else if (event.target.matches('input[type="radio"][name="area-filter"]')) {
+            if (event.target.value === 'all-areas') {
+                document.querySelectorAll('input[type="checkbox"][name="area-filter"]').forEach(checkbox => {
                     checkbox.checked = false; // Uncheck all checkboxes
                 });
             }
@@ -37,6 +66,18 @@ class LayerControl {
         const combinedFilter = `${crimeFilterCondition} AND ${areaFilterCondition} AND ${yearFilterCondition}`;
         this.updateLayerFilter(combinedFilter);
         this.updateAreaVisibility(selectedAreaFilters);
+
+        // Ensure the "All Crimes" radio button is checked if no checkboxes are selected
+        const allCrimesRadio = document.getElementById('all');
+        if (!selectedCrimeFilters.length) {
+            allCrimesRadio.checked = true;
+        }
+
+        // Ensure the "All Areas" radio button is checked if no checkboxes are selected
+        const allAreasRadio = document.getElementById('all-areas');
+        if (!selectedAreaFilters.length) {
+            allAreasRadio.checked = true;
+        }
     }
 
     updateLayerFilter(filterCondition) {
@@ -81,16 +122,24 @@ class LayerControl {
         areas.sort((a, b) => a.name.localeCompare(b.name));
 
         const container = document.getElementById('area-filter-options');
-        container.innerHTML = '<h3>Areas</h3>';
+        container.innerHTML = `
+            <h3>Areas</h3>
+            <input type="radio" id="all-areas" name="area-filter" value="all-areas" checked>
+            <label for="all-areas">All Areas</label>
+            <br>
+        `;
+        
         areas.forEach(area => {
+            const checkboxId = `area-${area.id}`; // Unique and consistent ID
+
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
-            checkbox.id = `area-${area.id}`;
+            checkbox.id = checkboxId; // Ensure the id matches
             checkbox.name = 'area-filter';
             checkbox.value = area.id;
 
             const label = document.createElement('label');
-            label.htmlFor = `area-${area.id}`;
+            label.htmlFor = checkboxId; // Ensure the for attribute matches the checkbox id
             label.textContent = area.name;
 
             container.appendChild(checkbox);
