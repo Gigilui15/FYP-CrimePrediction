@@ -13,9 +13,8 @@ class LayerControl {
     handleFilterChange(event) {
         if (event.target.matches('input[type="checkbox"][name="filter"]')) {
             const allCrimesRadio = document.getElementById('all');
-            allCrimesRadio.checked = false; // Uncheck "All Crimes"
+            allCrimesRadio.checked = false;
 
-            // If no checkboxes are checked, check the "All Crimes" radio button
             const anyCheckboxChecked = Array.from(document.querySelectorAll('input[type="checkbox"][name="filter"]')).some(checkbox => checkbox.checked);
             if (!anyCheckboxChecked) {
                 allCrimesRadio.checked = true;
@@ -25,7 +24,7 @@ class LayerControl {
         } else if (event.target.matches('input[type="radio"][name="filter"]')) {
             if (event.target.value === 'all') {
                 document.querySelectorAll('input[type="checkbox"][name="filter"]').forEach(checkbox => {
-                    checkbox.checked = false; // Uncheck all checkboxes
+                    checkbox.checked = false;
                 });
             }
             this.updateFilters();
@@ -35,9 +34,8 @@ class LayerControl {
     handleAreaFilterChange(event) {
         if (event.target.matches('input[type="checkbox"][name="area-filter"]')) {
             const allAreasRadio = document.getElementById('all-areas');
-            allAreasRadio.checked = false; // Uncheck "All Areas"
+            allAreasRadio.checked = false;
 
-            // If no checkboxes are checked, check the "All Areas" radio button
             const anyCheckboxChecked = Array.from(document.querySelectorAll('input[type="checkbox"][name="area-filter"]')).some(checkbox => checkbox.checked);
             if (!anyCheckboxChecked) {
                 allAreasRadio.checked = true;
@@ -47,7 +45,7 @@ class LayerControl {
         } else if (event.target.matches('input[type="radio"][name="area-filter"]')) {
             if (event.target.value === 'all-areas') {
                 document.querySelectorAll('input[type="checkbox"][name="area-filter"]').forEach(checkbox => {
-                    checkbox.checked = false; // Uncheck all checkboxes
+                    checkbox.checked = false;
                 });
             }
             this.updateFilters();
@@ -67,17 +65,17 @@ class LayerControl {
         this.updateLayerFilter(combinedFilter);
         this.updateAreaVisibility(selectedAreaFilters);
 
-        // Ensure the "All Crimes" radio button is checked if no checkboxes are selected
         const allCrimesRadio = document.getElementById('all');
         if (!selectedCrimeFilters.length) {
             allCrimesRadio.checked = true;
         }
 
-        // Ensure the "All Areas" radio button is checked if no checkboxes are selected
         const allAreasRadio = document.getElementById('all-areas');
         if (!selectedAreaFilters.length) {
             allAreasRadio.checked = true;
         }
+
+        return { selectedCrimeFilters, selectedAreaFilters, selectedYear };
     }
 
     updateLayerFilter(filterCondition) {
@@ -130,16 +128,16 @@ class LayerControl {
         `;
         
         areas.forEach(area => {
-            const checkboxId = `area-${area.id}`; // Unique and consistent ID
+            const checkboxId = `area-${area.id}`;
 
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
-            checkbox.id = checkboxId; // Ensure the id matches
+            checkbox.id = checkboxId;
             checkbox.name = 'area-filter';
             checkbox.value = area.id;
 
             const label = document.createElement('label');
-            label.htmlFor = checkboxId; // Ensure the for attribute matches the checkbox id
+            label.htmlFor = checkboxId;
             label.textContent = area.name;
 
             container.appendChild(checkbox);

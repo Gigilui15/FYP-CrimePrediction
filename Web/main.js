@@ -10,7 +10,6 @@ class GISMap {
         this.addCustomControls();
         this.addMousePositionControl();
 
-        // Restore heatmap state if it was generated previously
         this.restoreHeatmapState();
     }
 
@@ -180,6 +179,8 @@ class GISMap {
 
         const url = `http://localhost:8080/geoserver/CrimePrediction/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=CrimePrediction:Crimes&outputFormat=application/json${cqlFilterString}`;
 
+        console.log('Fetch URL:', url);
+
         try {
             const response = await fetch(url);
             const text = await response.text();
@@ -326,7 +327,6 @@ class GISMap {
         // Hide loading indicator
         document.getElementById('loading-indicator').style.visibility = 'hidden';
     }
-    
 
     restoreHeatmapState() {
         if (localStorage.getItem('heatmapGenerated') === 'true') {
