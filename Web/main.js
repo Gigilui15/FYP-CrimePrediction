@@ -9,7 +9,6 @@ class GISMap {
         this.searchManager = new SearchManager(this.map, this.popupManager); // Initialize SearchManager
         this.addCustomControls();
         this.addMousePositionControl();
-
         this.restoreHeatmapState();
     }
 
@@ -141,8 +140,6 @@ class GISMap {
             toggleButton.classList.remove('clicked');
         }
     }
-    
-    
 
     createFullscreenButton() {
         const button = document.createElement('button');
@@ -186,7 +183,6 @@ class GISMap {
 
         return new ol.control.Control({ element: element });
     }
-
 
     async fetchAndAggregateCrimeData() {
         console.log('Fetching and aggregating crime data...');
@@ -246,8 +242,6 @@ class GISMap {
             console.error('Error fetching and aggregating crime data:', error);
         }
     }
-    
-    
 
     calculateQuantiles(crimeCounts, numClasses) {
         const values = Object.values(crimeCounts).sort((a, b) => a - b);
@@ -351,7 +345,7 @@ class GISMap {
 
         console.log('Custom Heatmap styling applied');
     }
-    
+
     async generateHeatmap() {
         console.log('Generating heatmap...');
     
@@ -416,7 +410,6 @@ class GISMap {
             }
         }
     }
-        
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
