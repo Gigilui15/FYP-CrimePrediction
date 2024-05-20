@@ -199,7 +199,7 @@ body {
 }
 
 .myButton{
-    background-color: #121735;
+    background-color: #ffffff;
     color: white;
     font-weight: 700;
     text-align: center;
@@ -219,13 +219,13 @@ body {
 }
 
 .myButton:hover{
-    background-color: #28378b;
+    background-color: #a7a7a7;
 }
 .myButton.clicked{
     background-color: #189a11;
 }
 .myButton.clicked:hover{
-    background-color: #121735;
+    background-color: #1e6c1a;
 }
 
 .fsButtonDiv{

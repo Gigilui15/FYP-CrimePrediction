@@ -99,7 +99,7 @@ class GISMap {
     // Create the legend toggle button
     createLegendToggleButton() {
         const button = document.createElement('button');
-        button.innerHTML = '<img src="./Images/legend.png" style="width:20px;filter:brightness(0) invert(1); vertical-align:middle"></img>';
+        button.innerHTML = '<img src="./Images/legend.png" style="width:20px;filter:brightness(0) invert(0); vertical-align:middle"></img>';
         button.className = 'myButton';
         button.id = 'toggleLegendButton';
         button.title = 'Toggle Legend';
@@ -117,8 +117,9 @@ class GISMap {
 
     createHomeButton() {
         const button = document.createElement('button');
-        button.innerHTML = '<img src="./Images/home.png" style="width:20px;filter:brightness(0) invert(1); vertical-align:middle"></img>';
+        button.innerHTML = '<img src="./Images/home.png" style="width:20px;filter:brightness(0) invert(0); vertical-align:middle"></img>';
         button.className = 'myButton';
+        button.title = 'Home';
         button.onclick = () => location.href = "index.html";
 
         const element = document.createElement('div');
@@ -130,18 +131,24 @@ class GISMap {
 
     toggleLegend() {
         const legend = document.getElementById('legend');
+        const toggleButton = document.getElementById('toggleLegendButton');
+    
         if (legend.style.display === 'none') {
             legend.style.display = 'block';
+            toggleButton.classList.add('clicked');
         } else {
             legend.style.display = 'none';
+            toggleButton.classList.remove('clicked');
         }
     }
+    
     
 
     createFullscreenButton() {
         const button = document.createElement('button');
-        button.innerHTML = '<img src="./Images/fs.png" style="width:20px;filter:brightness(0) invert(1); vertical-align:middle"></img>';
+        button.innerHTML = '<img src="./Images/fs.png" style="width:20px;filter:brightness(0) invert(0); vertical-align:middle"></img>';
         button.className = 'myButton';
+        button.title = 'Toggle Map Fullscreen';
         button.onclick = () => {
             const mapElement = document.getElementById('js-map');
             if (!document.fullscreenElement) {
@@ -163,10 +170,10 @@ class GISMap {
 
     createFeatureInfoButton() {
         const button = document.createElement('button');
-        button.innerHTML = '<img id="featureImg" src="./Images/click.png" style="width:20px;filter:brightness(0) invert(1); vertical-align:middle"></img>';
+        button.innerHTML = '<img id="featureImg" src="./Images/click.png" style="width:20px;filter:brightness(0) invert(0); vertical-align:middle"></img>';
         button.className = 'myButton';
         button.id = 'featureInfoButton';
-        button.title = 'Click to toggle';
+        button.title = 'Point Information';
 
         const element = document.createElement('div');
         element.className = 'featureInfoButton';
@@ -290,7 +297,7 @@ class GISMap {
     }
 
     applyChoroplethStyling(crimeCounts) {
-        console.log('Applying choropleth styling...');
+        console.log('Applying Heatmap styling...');
         const areasLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Areas');
         if (!areasLayer) {
             console.error('Areas layer not found');
@@ -308,7 +315,7 @@ class GISMap {
             format: new ol.format.GeoJSON()
         });
 
-        const choroplethLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Choropleth Heatmap');
+        const choroplethLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Custom Heatmap');
         if (choroplethLayer) {
             choroplethLayer.setSource(source);
         } else {
@@ -336,13 +343,13 @@ class GISMap {
                         })
                     });
                 },
-                title: 'Choropleth Heatmap'
+                title: 'Custom Heatmap'
             });
             this.map.addLayer(newChoroplethLayer);
             newChoroplethLayer.setZIndex(10);
         }
 
-        console.log('Choropleth styling applied');
+        console.log('Custom Heatmap styling applied');
     }
     
     async generateHeatmap() {
@@ -362,7 +369,7 @@ class GISMap {
             if (crimesLayer) crimesLayer.setVisible(false);
     
             // Ensure the "Choropleth Heatmap" layer is added and set its Z-index
-            const choroplethLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Choropleth Heatmap');
+            const choroplethLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Custom Heatmap');
             if (choroplethLayer) {
                 this.map.removeLayer(choroplethLayer); // Remove existing heatmap layer
             }
@@ -378,7 +385,7 @@ class GISMap {
             localStorage.setItem('areasLayerVisible', areasLayer.getVisible());
             localStorage.setItem('crimesLayerVisible', crimesLayer.getVisible());
         } else {
-            console.error('No crime data available for choropleth styling');
+            console.error('No crime data available for Custom Heatmap styling');
         }
     
         // Hide loading indicator
@@ -402,7 +409,7 @@ class GISMap {
             if (crimesLayer) crimesLayer.setVisible(crimesLayerVisible);
     
             // Ensure the "Choropleth Heatmap" layer is added and set its Z-index
-            const choroplethLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Choropleth Heatmap');
+            const choroplethLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Custom Heatmap');
             if (choroplethLayer) {
                 choroplethLayer.setVisible(true);
                 choroplethLayer.setZIndex(10);
