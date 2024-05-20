@@ -415,3 +415,46 @@ body {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+.legend {
+    position: absolute;
+    bottom: 20px;
+    left: 70px;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 10px;
+    border-radius: 4px;
+    font-size: small;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    z-index: 10000;
+}
+
+.legend h3 {
+    margin: 0;
+    padding: 0;
+    font-size: small;
+    text-align: center;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-top: 5px;
+}
+
+.legend-item div {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+}
+
+.legend-toggle{
+    top: 50;
+}
+
+.legendToggleButton {
+    position: absolute;
+    display: block;
+    margin: auto auto auto 10px;
+    bottom: 140px; 
+    left: 10;
+}

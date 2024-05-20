@@ -17,7 +17,7 @@
                 <div id="year-filter-options" style="font-size: small;">
                     <h3>Year</h3>
                     <select id="year-filter">
-                        <option value="">Select Year</option>
+                        <option value="">2015 - 2019</option>
                         <option value="2015">2015</option>
                         <option value="2016">2016</option>
                         <option value="2017">2017</option>
@@ -30,34 +30,34 @@
                     <input type="radio" id="all" name="filter" value="all" onclick="updateLayerFilter('all');" checked>
                     <label for="all">All Crimes</label>
                     <br>
-                    <input type="checkbox" id="Aggrevated Assault" name="filter" value="Aggrevated Assault">
+                    <input type="checkbox" id="Aggrevated Assault" name="filter" value="400">
                     <label for="Aggrevated Assault">Aggravated Assault</label>
                     <br>
-                    <input type="checkbox" id="Burglary" name="filter" value="Burglary">
+                    <input type="checkbox" id="Burglary" name="filter" value="750">
                     <label for="Burglary">Burglary</label>
                     <br>
-                    <input type="checkbox" id="DamageOfAsset" name="filter" value="Damage of Asset">
+                    <input type="checkbox" id="DamageOfAsset" name="filter" value="1900">
                     <label for="DamageOfAsset">Damage of Asset</label>
                     <br>
-                    <input type="checkbox" id="Identity Theft" name="filter" value="Identity Theft">
+                    <input type="checkbox" id="Identity Theft" name="filter" value="800">
                     <label for="Identity Theft">Identity Theft</label>
                     <br>
-                    <input type="checkbox" id="Property Crimes/Theft" name="filter" value="Property Crimes/Theft">
+                    <input type="checkbox" id="Property Crimes/Theft" name="filter" value="850">
                     <label for="Property Crimes/Theft">Property Crimes</label>
                     <br>
-                    <input type="checkbox" id="Robbery" name="filter" value="Robbery">
+                    <input type="checkbox" id="Robbery" name="filter" value="725">
                     <label for="Robbery">Robbery</label>
                     <br>
-                    <input type="checkbox" id="Simple Assault" name="filter" value="Simple Assault">
+                    <input type="checkbox" id="Simple Assault" name="filter" value="300">
                     <label for="Simple Assault">Simple Assault</label>
                     <br>
-                    <input type="checkbox" id="theft" name="filter" value="Theft">
+                    <input type="checkbox" id="theft" name="filter" value="775">
                     <label for="theft">Theft</label>
                     <br>
-                    <input type="checkbox" id="Threats & Scares" name="filter" value="Threats & Scares">
+                    <input type="checkbox" id="Threats & Scares" name="filter" value="2400">
                     <label for="Threats & Scares">Threats & Scares</label>
                     <br>
-                    <input type="checkbox" id="Violation of Restraining/Court Order" name="filter" value="Violation of Restraining/Court Order">
+                    <input type="checkbox" id="Violation of Restraining/Court Order" name="filter" value="1700">
                     <label for="Violation of Restraining/Court Order">Violation of Restraining/Court Order</label>
                 </div>
                 <div class="toc">
@@ -83,8 +83,10 @@
                     <div class="spinner"></div>
                 </div>
                 <div id="mouse-position" class="mouse-position"></div>
+                <div id="legend" class="legend"></div>
             </div>
         </div>
+    </div>
     </div>
     <script src="./main.js"></script>
     <script src="./LayerControl.js"></script>

@@ -29,7 +29,8 @@ class GISMap {
         const layersConfig = [
             { title: "Open Street Map", type: "base", url: "https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png" },
             { title: "Areas", type: "wms", url: "http://localhost:8080/geoserver/CrimePrediction/wms", params: { 'LAYERS': 'CrimePrediction:Areas', 'TILED': true } },
-            { title: "Crime", type: "wms", url: "http://localhost:8080/geoserver/CrimePrediction/wms", params: { 'LAYERS': 'CrimePrediction:Crimes', 'TILED': true } }
+            { title: "Crime", type: "wms", url: "http://localhost:8080/geoserver/CrimePrediction/wms", params: { 'LAYERS': 'CrimePrediction:Crimes', 'TILED': true } },
+            { title: "2019 Predictions", type: "wms", url: "http://localhost:8080/geoserver/CrimePrediction/wms", params: { 'LAYERS': 'CrimePrediction:LSTM_Predictions', 'TILED': true } }
         ];
 
         layersConfig.forEach(config => {
@@ -87,10 +88,31 @@ class GISMap {
         const homeButton = this.createHomeButton();
         const fsButton = this.createFullscreenButton();
         const featureInfoButton = this.createFeatureInfoButton();
-
+        const legendToggleButton = this.createLegendToggleButton(); // New button
+    
         this.map.addControl(homeButton);
         this.map.addControl(fsButton);
         this.map.addControl(featureInfoButton);
+        this.map.addControl(legendToggleButton); // Add the new button
+    }
+
+    // Create the legend toggle button
+    createLegendToggleButton() {
+        const button = document.createElement('button');
+        button.innerHTML = '<img src="./Images/legend.png" style="width:20px;filter:brightness(0) invert(1); vertical-align:middle"></img>';
+        button.className = 'myButton';
+        button.id = 'toggleLegendButton';
+        button.title = 'Toggle Legend';
+
+        const element = document.createElement('div');
+        element.className = 'legendToggleButton';
+        element.appendChild(button);
+
+        button.addEventListener("click", () => {
+            this.toggleLegend();
+        });
+
+        return new ol.control.Control({ element: element });
     }
 
     createHomeButton() {
@@ -105,6 +127,16 @@ class GISMap {
 
         return new ol.control.Control({ element: element });
     }
+
+    toggleLegend() {
+        const legend = document.getElementById('legend');
+        if (legend.style.display === 'none') {
+            legend.style.display = 'block';
+        } else {
+            legend.style.display = 'none';
+        }
+    }
+    
 
     createFullscreenButton() {
         const button = document.createElement('button');
@@ -148,6 +180,7 @@ class GISMap {
         return new ol.control.Control({ element: element });
     }
 
+
     async fetchAndAggregateCrimeData() {
         console.log('Fetching and aggregating crime data...');
         const crimeLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Crime');
@@ -155,48 +188,43 @@ class GISMap {
             console.error('Crime layer not found');
             return;
         }
-
-        const params = crimeLayer.getSource().getParams();
-        let cqlFilter = [];
-
-        // Collect the year filter value
+    
         const yearFilter = document.getElementById('year-filter').value;
+        const crimeTypeFilters = [];
+        document.querySelectorAll('#filter-options input[type="checkbox"]:checked').forEach(checkbox => {
+            crimeTypeFilters.push(`agg_id='${checkbox.value}'`);
+        });
+    
+        const cqlFilter = [];
         if (yearFilter) {
             cqlFilter.push(`year=${yearFilter}`);
         }
-
-        // Collect the crime type filter values
-        const crimeTypeFilters = [];
-        document.querySelectorAll('#filter-options input[type="checkbox"]:checked').forEach(checkbox => {
-            crimeTypeFilters.push(`crm_cd_des='${checkbox.value}'`);
-        });
-
         if (crimeTypeFilters.length > 0) {
             cqlFilter.push(`(${crimeTypeFilters.join(' OR ')})`);
         }
-
+    
         const cqlFilterString = cqlFilter.length > 0 ? `&CQL_FILTER=${encodeURIComponent(cqlFilter.join(' AND '))}` : '';
-
         const url = `http://localhost:8080/geoserver/CrimePrediction/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=CrimePrediction:Crimes&outputFormat=application/json${cqlFilterString}`;
-
+    
+        console.log('CQL Filter:', cqlFilterString);
         console.log('Fetch URL:', url);
-
+    
         try {
             const response = await fetch(url);
             const text = await response.text();
-
+    
             // Check if the response is JSON or XML
             if (text.startsWith('<')) {
                 console.error('Server returned an error:', text);
                 return;
             }
-
+    
             const data = JSON.parse(text);
             console.log('Data fetched:', data);
-
+    
             const features = new ol.format.GeoJSON().readFeatures(data);
             const crimeCounts = {};
-
+    
             features.forEach(feature => {
                 const area = feature.get('area');
                 if (!crimeCounts[area]) {
@@ -204,13 +232,15 @@ class GISMap {
                 }
                 crimeCounts[area] += 1;
             });
-
+    
             console.log('Crime counts:', crimeCounts);
             return crimeCounts;
         } catch (error) {
             console.error('Error fetching and aggregating crime data:', error);
         }
     }
+    
+    
 
     calculateQuantiles(crimeCounts, numClasses) {
         const values = Object.values(crimeCounts).sort((a, b) => a - b);
@@ -234,6 +264,31 @@ class GISMap {
         ];
     }
 
+    generateLegend(quantiles, colorRamp) {
+        const legend = document.getElementById('legend');
+        legend.innerHTML = '<h3>Crime Heatmap Legend</h3>'; // Reset legend content
+
+        for (let i = 0; i < quantiles.length - 1; i++) {
+            const legendItem = document.createElement('div');
+            legendItem.className = 'legend-item';
+            legendItem.style.display = 'flex';
+            legendItem.style.alignItems = 'center';
+
+            const colorBox = document.createElement('div');
+            colorBox.style.width = '20px';
+            colorBox.style.height = '20px';
+            colorBox.style.backgroundColor = colorRamp[i];
+            colorBox.style.marginRight = '10px';
+
+            const label = document.createElement('span');
+            label.textContent = `${quantiles[i]} - ${quantiles[i + 1]}`;
+
+            legendItem.appendChild(colorBox);
+            legendItem.appendChild(label);
+            legend.appendChild(legendItem);
+        }
+    }
+
     applyChoroplethStyling(crimeCounts) {
         console.log('Applying choropleth styling...');
         const areasLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Areas');
@@ -245,6 +300,8 @@ class GISMap {
         const numClasses = 7;
         const quantiles = this.calculateQuantiles(crimeCounts, numClasses);
         const colorRamp = this.generateColorRamp();
+
+        this.generateLegend(quantiles, colorRamp);
 
         const source = new ol.source.Vector({
             url: 'http://localhost:8080/geoserver/CrimePrediction/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=CrimePrediction:Areas&outputFormat=application/json',
@@ -287,7 +344,7 @@ class GISMap {
 
         console.log('Choropleth styling applied');
     }
-
+    
     async generateHeatmap() {
         console.log('Generating heatmap...');
     
