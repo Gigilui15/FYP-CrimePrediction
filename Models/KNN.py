@@ -5,44 +5,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import learning_curve
 from sklearn.ensemble import RandomForestRegressor
-
 # Load the training dataset
-train_data = pd.read_csv(r'C:\\Users\\luigi\\Desktop\\Third Year\\Thesis\\Artefact\\TrainTestSplit\\train_set.csv')
+train_data = pd.read_csv(r'C:\\Users\\luigi\\Desktop\\Third Year\\Thesis\\Artefact\\Data\\train_set.csv')
 
 # Separate features and target variable for training set
 X_train = train_data.drop(columns=['total_crimes'])
 y_train = train_data['total_crimes']
 
 # Train the model with K = 5
-best_knn_regressor = KNeighborsRegressor(n_neighbors=5, metric='cosine')
+best_knn_regressor = KNeighborsRegressor(n_neighbors=2, metric='cosine')
 best_knn_regressor.fit(X_train, y_train)
 
 # Predict on the training data
 y_train_pred = best_knn_regressor.predict(X_train)
 
-# Calculate Mean Squared Error (MSE) for training set
-mse_train = mean_squared_error(y_train, y_train_pred)
-print("Training Set Metrics:")
-print("Mean Squared Error (MSE):", mse_train)
-
-# Calculate Root Mean Squared Error (RMSE) for training set
-rmse_train = np.sqrt(mse_train)
-print("Root Mean Squared Error (RMSE):", rmse_train)
-
-# Calculate Mean Absolute Error (MAE) for training set
-mae_train = mean_absolute_error(y_train, y_train_pred)
-print("Mean Absolute Error (MAE):", mae_train)
-
-# Calculate R-squared (R2) for training set
-r2_train = r2_score(y_train, y_train_pred)
-print("R-squared (R2):", r2_train)
-
-# Calculate correlation coefficient (R) for training set
-corr_coef_train = np.corrcoef(y_train, y_train_pred)[0, 1]
-print("Correlation Coefficient (R):", corr_coef_train)
-
 # Load the test dataset
-test_data = pd.read_csv(r'C:\\Users\\luigi\\Desktop\\Third Year\\Thesis\\Artefact\\TrainTestSplit\\test_set.csv')
+test_data = pd.read_csv(r'C:\\Users\\luigi\\Desktop\\Third Year\\Thesis\\Artefact\\Data\\test_set.csv')
 
 # Separate features and target variable for testing set
 X_test = test_data.drop(columns=['total_crimes'])
@@ -50,6 +28,15 @@ y_test = test_data['total_crimes']
 
 # Predict on the test data
 y_pred = best_knn_regressor.predict(X_test)
+
+# Add predictions as a new column in the test dataset
+test_data['knn_predictions'] = y_pred
+
+# Now print the test dataset with the predictions
+print("\n Predictions:\n",test_data.head() ,"\n")  
+
+# Also save the predictions as a CSV
+test_data.to_csv('C:\\Users\\luigi\\Desktop\\Third Year\\Thesis\\Artefact\\Data\\Model Predictions\\KNN_predictions.csv', index=False)
 
 # Calculate Mean Squared Error (MSE) for testing set
 mse = mean_squared_error(y_test, y_pred)
@@ -94,6 +81,18 @@ plt.ylabel('Residuals')
 plt.grid(True)
 plt.show()
 
+# Calculate residuals
+residuals = y_test - y_pred
+
+# Plot distribution of residuals
+plt.figure(figsize=(10, 5))
+plt.hist(residuals, bins=20, color='blue', alpha=0.5)
+plt.title('Distribution of Residuals')
+plt.xlabel('Residuals')
+plt.ylabel('Frequency')
+plt.grid(True)
+plt.show()
+
 # Learning Curve
 train_sizes, train_scores, test_scores = learning_curve(best_knn_regressor, X_train, y_train, cv=5, scoring='neg_mean_squared_error', n_jobs=-1)
 train_scores_mean = -np.mean(train_scores, axis=1)
@@ -130,16 +129,4 @@ plt.xticks(range(X_train.shape[1]), feature_names[indices], rotation=90)
 plt.xlabel("Features")
 plt.ylabel("Importance")
 plt.tight_layout()
-plt.show()
-
-# Calculate residuals
-residuals = y_test - y_pred
-
-# Plot distribution of residuals
-plt.figure(figsize=(10, 5))
-plt.hist(residuals, bins=20, color='blue', alpha=0.5)
-plt.title('Distribution of Residuals')
-plt.xlabel('Residuals')
-plt.ylabel('Frequency')
-plt.grid(True)
 plt.show()

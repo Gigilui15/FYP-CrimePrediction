@@ -21,7 +21,7 @@ scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 
 # Initialize and train the SVR model
-svr = SVR(kernel='rbf', C=128657, epsilon=1, gamma='auto')
+svr = SVR(kernel='rbf', C=28657, epsilon=1, gamma='auto')
 svr.fit(X_train_scaled, y_train)
 
 # Load test data
@@ -45,6 +45,7 @@ mse_test = mean_squared_error(y_test, y_pred)
 rmse_test = np.sqrt(mse_test)
 mae_test = mean_absolute_error(y_test, y_pred)
 r2_test = r2_score(y_test, y_pred)
+correlation_coefficient = np.corrcoef(y_test, y_pred)[0, 1]
 
 # Print testing set metrics
 print("\nTesting Set Metrics:")
@@ -52,49 +53,41 @@ print("Mean Squared Error (MSE):", mse_test)
 print("Root Mean Squared Error (RMSE):", rmse_test)
 print("Mean Absolute Error (MAE):", mae_test)
 print("R-squared (R2):", r2_test)
+print("Correlation Coefficient (R):", correlation_coefficient)
 
 # Plotting Actual Vs Predicted Values
 plt.figure(figsize=(8, 6))
-plt.scatter(y_test, y_pred, color='blue')
-plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=4)
+plt.scatter(y_test, y_pred, color='blue', alpha=0.5)
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=2)
 plt.xlabel('Actual Values')
 plt.ylabel('Predicted Values')
 plt.title('True vs Predicted Values')
+plt.grid(True)
 plt.show()
 
 # Plotting Residuals
 residuals = y_test - y_pred
 plt.figure(figsize=(8, 6))
-plt.scatter(y_test, residuals, color='blue')
+plt.scatter(y_test, residuals, color='blue', alpha=0.5)
+plt.axhline(y=0, color='red', linestyle='--')
 plt.xlabel('True Values')
 plt.ylabel('Residuals')
 plt.title('Residual Plot')
-plt.axhline(y=0, color='r', linestyle='--')
+plt.grid(True)
 plt.show()
 
-# Plotting Histogram of Residuals (Distribution purposes)
+# Plotting Histogram of Residuals
 plt.figure(figsize=(8, 6))
-plt.hist(residuals, bins=30, color='blue', edgecolor='black')
+plt.hist(residuals, bins=30, color='blue', alpha=0.5, edgecolor='black')
 plt.xlabel('Residuals')
 plt.ylabel('Frequency')
 plt.title('Histogram of Residuals')
-plt.show()
-
-# Plotting Learning Curve
-train_sizes, train_scores, test_scores = learning_curve(svr, X_train_scaled, y_train, cv=5, scoring='neg_mean_squared_error', n_jobs=-1, train_sizes=np.linspace(0.1, 1.0, 5))
-
-train_scores_mean = -train_scores.mean(axis=1)
-test_scores_mean = -test_scores.mean(axis=1)
-
-plt.figure(figsize=(8, 6))
-plt.plot(train_sizes, train_scores_mean, 'o-', color='r', label='Training Error')
-plt.plot(train_sizes, test_scores_mean, 'o-', color='g', label='Validation Error')
-plt.xlabel('Training examples')
-plt.ylabel('Mean Squared Error')
-plt.title('Learning Curve')
-plt.legend()
+plt.grid(True)
 plt.show()
 
 # Optionally print the test data with predictions for visual comparison
 test_data['predicted_crimes'] = y_pred
 print(test_data)
+
+#Saving predictions since this is the best SVR model developed
+test_data.to_csv('C:\\Users\\luigi\\Desktop\\Third Year\\Thesis\\Artefact\\Data\\Model Predictions\\SVR_predictions.csv', index=False)

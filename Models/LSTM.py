@@ -124,6 +124,9 @@ final_predictions = scaler.inverse_transform(full_test_predictions)[:, -1]
 test_data['Predicted_Crimes'] = final_predictions
 print(test_data[['Total_Crimes', 'Predicted_Crimes']])
 
+#Save the predictions as a CSV
+test_data.to_csv('C:\\Users\\luigi\\Desktop\\Third Year\\Thesis\\Artefact\\Data\\Model Predictions\\LSTM_predictions.csv', index=False)
+
 # Calculate Mean Squared Error (MSE)
 mse = mean_squared_error(test_data['Total_Crimes'], test_data['Predicted_Crimes'])
 
