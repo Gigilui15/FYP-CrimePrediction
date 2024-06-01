@@ -4,9 +4,9 @@ class GISMap {
         this.initLayers();
         this.initControls();
         this.setupEventHandlers();
-        this.layerControl = new LayerControl(this.map); // Initialize LayerControl
-        this.popupManager = new PopupManager(this.map); // Initialize PopupManager
-        this.searchManager = new SearchManager(this.map, this.popupManager); // Initialize SearchManager
+        this.layerControl = new LayerControl(this.map);
+        this.popupManager = new PopupManager(this.map);
+        this.searchManager = new SearchManager(this.map, this.popupManager);
         this.addCustomControls();
         this.addMousePositionControl();
         this.restoreHeatmapState();
@@ -81,6 +81,64 @@ class GISMap {
     setupEventHandlers() {
         this.map.on('singleclick', evt => this.popupManager.handleMapClick(evt));
         document.getElementById('generate-heatmap').addEventListener('click', () => this.generateHeatmap());
+        document.getElementById('generate-predictions-heatmap').addEventListener('click', () => this.generatePredictionsHeatmap());
+    }
+
+    async generatePredictionsHeatmap() {
+        document.getElementById('loading-indicator').style.visibility = 'visible';
+
+        const crimeCounts = await this.fetchAndAggregatePredictionData();
+        if (crimeCounts) {
+            this.applyChoroplethStyling(crimeCounts, 'Predictions Heatmap');
+
+            // Toggle off the "Areas" and "Crimes" layers
+            const areasLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Areas');
+            const crimesLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Crime');
+            if (areasLayer) areasLayer.setVisible(false);
+            if (crimesLayer) crimesLayer.setVisible(false);
+
+            // Ensure the "Predictions Heatmap" layer is added and set its Z-index
+            const predictionsLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Predictions Heatmap');
+            if (predictionsLayer) {
+                this.map.removeLayer(predictionsLayer);
+            }
+            this.applyChoroplethStyling(crimeCounts, 'Predictions Heatmap');
+
+            const osmLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Open Street Map');
+            if (osmLayer) osmLayer.setZIndex(0);
+
+            localStorage.setItem('predictionsHeatmapGenerated', 'true');
+            localStorage.setItem('predictionsHeatmapCrimeCounts', JSON.stringify(crimeCounts));
+        } else {
+            console.error('No prediction data available for Predictions Heatmap styling');
+        }
+
+        document.getElementById('loading-indicator').style.visibility = 'hidden';
+    }
+
+    async fetchAndAggregatePredictionData() {
+        const url = 'http://localhost:8080/geoserver/CrimePrediction/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=CrimePrediction:LSTM_Predictions&outputFormat=application/json';
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            const features = new ol.format.GeoJSON().readFeatures(data);
+            const crimeCounts = {};
+
+            features.forEach(feature => {
+                const area = feature.get('area');
+                const totalCrimes = feature.get('total_crimes');
+                if (!crimeCounts[area]) {
+                    crimeCounts[area] = 0;
+                }
+                crimeCounts[area] += totalCrimes;
+            });
+
+            return crimeCounts;
+        } catch (error) {
+            console.error('Error fetching and aggregating prediction data:', error);
+        }
     }
 
     addCustomControls() {
@@ -193,6 +251,7 @@ class GISMap {
         }
     
         const yearFilter = document.getElementById('year-filter').value;
+        const monthFilter = document.getElementById('month-filter').value; // Add this line
         const crimeTypeFilters = [];
         document.querySelectorAll('#filter-options input[type="checkbox"]:checked').forEach(checkbox => {
             crimeTypeFilters.push(`agg_id='${checkbox.value}'`);
@@ -201,6 +260,9 @@ class GISMap {
         const cqlFilter = [];
         if (yearFilter) {
             cqlFilter.push(`year=${yearFilter}`);
+        }
+        if (monthFilter) {
+            cqlFilter.push(`month=${monthFilter}`); // Add this line
         }
         if (crimeTypeFilters.length > 0) {
             cqlFilter.push(`(${crimeTypeFilters.join(' OR ')})`);
@@ -241,7 +303,7 @@ class GISMap {
         } catch (error) {
             console.error('Error fetching and aggregating crime data:', error);
         }
-    }
+    }    
 
     calculateQuantiles(crimeCounts, numClasses) {
         const values = Object.values(crimeCounts).sort((a, b) => a - b);
@@ -383,6 +445,38 @@ class GISMap {
         }
     
         // Hide loading indicator
+        document.getElementById('loading-indicator').style.visibility = 'hidden';
+    }
+
+    async generatePredictionsHeatmap() {
+        document.getElementById('loading-indicator').style.visibility = 'visible';
+
+        const crimeCounts = await this.fetchAndAggregatePredictionData();
+        if (crimeCounts) {
+            this.applyChoroplethStyling(crimeCounts);
+
+            // Toggle off the "Areas" and "Crimes" layers
+            const areasLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Areas');
+            const crimesLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Crime');
+            if (areasLayer) areasLayer.setVisible(false);
+            if (crimesLayer) crimesLayer.setVisible(false);
+
+            // Update the "2019 Predictions" layer
+            const predictionsLayer = this.map.getLayers().getArray().find(l => l.get('title') === '2019 Predictions');
+            if (predictionsLayer) {
+                this.map.removeLayer(predictionsLayer);
+            }
+            this.applyChoroplethStyling(crimeCounts);
+
+            const osmLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Open Street Map');
+            if (osmLayer) osmLayer.setZIndex(0);
+
+            localStorage.setItem('predictionsHeatmapGenerated', 'true');
+            localStorage.setItem('predictionsHeatmapCrimeCounts', JSON.stringify(crimeCounts));
+        } else {
+            console.error('No prediction data available for Predictions Heatmap styling');
+        }
+
         document.getElementById('loading-indicator').style.visibility = 'hidden';
     }
 

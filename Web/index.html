@@ -25,6 +25,24 @@
                         <option value="2019">2019</option>
                     </select>
                 </div>
+                <div id="month-filter-options" style="font-size: small;">
+                    <h3>Month</h3>
+                    <select id="month-filter">
+                        <option value="">All Months</option>
+                        <option value="01">January</option>
+                        <option value="02">February</option>
+                        <option value="03">March</option>
+                        <option value="04">April</option>
+                        <option value="05">May</option>
+                        <option value="06">June</option>
+                        <option value="07">July</option>
+                        <option value="08">August</option>
+                        <option value="09">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>                    
+                </div>
                 <div id="filter-options" style="font-size: small;">
                     <h3>Crimes</h3>
                     <input type="radio" id="all" name="filter" value="all" onclick="updateLayerFilter('all');" checked>
@@ -63,6 +81,9 @@
                 <div class="toc">
                     <button id="generate-heatmap" class="heatmap-button">Generate Heatmap</button>
                 </div>
+                <div class="toc">
+                    <button id="generate-predictions-heatmap" class="heatmap-button">Generate Predictions Heatmap</button>
+                </div>  
                 <div id="area-filter-options" style="font-size: small;">
                     <h3>Areas</h3>
                     <!-- Dynamically generated checkboxes for each area -->

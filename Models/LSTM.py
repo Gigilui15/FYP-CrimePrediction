@@ -13,9 +13,9 @@ from sklearn.model_selection import train_test_split
 import random
 
 # Set random seeds for reproducibility
-random.seed(73)
-np.random.seed(73)
-tf.random.set_seed(73)
+random.seed(37)
+np.random.seed(37)
+tf.random.set_seed(37)
 
 # Ensure TensorFlow uses deterministic operations
 os.environ['TF_DETERMINISTIC_OPS'] = '1'
@@ -36,7 +36,7 @@ scaled_df = pd.DataFrame(scaled_data, columns=['Month', 'Area', 'Crime_Category'
 scaled_df.sort_values(by=['Month', 'Crime_Category', 'Area'], inplace=True, kind='mergesort')  # Using 'mergesort' as it is a stable sort algorithm
 
 # Save the scaler to a file for later use
-directory = r'C:\Users\luigi\Desktop\Third Year\Thesis\Artefact\Scripts\LSTM'
+directory = r'C:\Users\luigi\Desktop\Third Year\\Thesis\\Artefact\\Scripts\\LSTM'
 if not os.path.exists(directory):
     os.makedirs(directory)
 scaler_path = os.path.join(directory, 'scaler.gz')
@@ -86,18 +86,17 @@ X_train = X_train.reshape((X_train.shape[0], n_timesteps, n_features))
 X_val = X_val.reshape((X_val.shape[0], n_timesteps, n_features))
 
 # Define and compile the LSTM model
-model = Sequential()
-model.add(LSTM(100, input_shape=(n_timesteps, n_features)))
-model.add(Dense(1))
-optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
-model.compile(loss='mae', optimizer=optimizer)
+def create_lstm_model():
+    model = Sequential()
+    model.add(LSTM(50, input_shape=(n_timesteps, n_features)))
+    model.add(Dropout(0.24805531570542003))
+    model.add(Dense(1))
+    optimizer = tf.keras.optimizers.Adam(learning_rate=0.0566755734505117)
+    model.compile(loss='mae', optimizer=optimizer)
 
-# Fit the model with validation data
+# Train the initial model
+model = create_lstm_model()
 history = model.fit(X_train, y_train, epochs=5, batch_size=90, validation_data=(X_val, y_val), verbose=2)
-
-# Save the trained model to a file
-model_path = os.path.join(directory, 'lstm_model.h5')
-model.save(model_path)
 
 # Load the test set and preprocess it similar to the training set
 test_data = pd.read_csv('C:\\Users\\luigi\\Desktop\\Third Year\\Thesis\\Artefact\\Data\\test_set.csv', header=0)
@@ -109,40 +108,80 @@ test_data.dropna(inplace=True)
 # Load the scaler and transform the test data
 scaler = joblib.load(scaler_path)
 test_scaled = scaler.transform(test_data[['Month', 'Area', 'Crime_Category', 'Total_Crimes']])
-test_X = test_scaled.reshape((test_scaled.shape[0], 1, test_scaled.shape[1]))
 
-# Load the trained model and make predictions on the test set
-model = load_model(model_path)
-test_predictions = model.predict(test_X)
+# Initialize variables for the sliding window process
+predictions = []
+train_size = len(X_train)
+step_size = 1260
+
+# Function to implement the sliding window prediction with retraining
+def sliding_window_prediction_with_retraining(model, train_data, test_data, step_size):
+    predictions = []
+    start_index = 0
+    while start_index < len(test_data):
+        # Define the end index for the current step
+        end_index = min(start_index + step_size, len(test_data))
+        
+        # Select the current test data for predictions
+        current_test_data = test_data[start_index:end_index]
+        
+        # Reshape the current test data
+        current_test_data = current_test_data.reshape((current_test_data.shape[0], n_timesteps, n_features))
+        
+        # Make predictions for the current test data
+        current_predictions = model.predict(current_test_data)
+        predictions.extend(current_predictions.flatten())
+        
+        # Add the predicted data to the training set
+        current_train_data = np.concatenate((train_data, current_test_data), axis=0)
+        current_train_labels = np.concatenate((y_train, current_predictions.flatten()), axis=0)
+        
+        # Remove the oldest data from the training set
+        if len(current_train_data) > train_size:
+            current_train_data = current_train_data[-train_size:]
+            current_train_labels = current_train_labels[-train_size:]
+        
+        # Reshape the training data for retraining
+        current_train_data = current_train_data.reshape((current_train_data.shape[0], n_timesteps, n_features))
+        
+        # Retrain the model with the updated training set
+        model = create_lstm_model()
+        model.fit(current_train_data, current_train_labels, epochs=5, batch_size=90, verbose=0)
+        
+        # Update the start index for the next step
+        start_index = end_index
+    
+    return predictions
+
+# Make predictions using the sliding window approach with retraining
+predictions = sliding_window_prediction_with_retraining(model, X_train, test_scaled, step_size)
 
 # Inverse transform the predicted values to the original scale
-dummy_features = np.zeros((test_predictions.shape[0], test_scaled.shape[1] - 1))
-full_test_predictions = np.concatenate([dummy_features, test_predictions], axis=1)
-final_predictions = scaler.inverse_transform(full_test_predictions)[:, -1]
+dummy_features = np.zeros((len(predictions), test_scaled.shape[1] - 1))
+full_predictions = np.concatenate([dummy_features, np.array(predictions).reshape(-1, 1)], axis=1)
+final_predictions = scaler.inverse_transform(full_predictions)[:, -1]
 
 # Add the predicted values to the test data
-test_data['Predicted_Crimes'] = final_predictions
+test_data['Predicted_Crimes'] = np.nan
+test_data.loc[:len(final_predictions)-1, 'Predicted_Crimes'] = final_predictions
 print(test_data[['Total_Crimes', 'Predicted_Crimes']])
 
-#Save the predictions as a CSV
-test_data.to_csv('C:\\Users\\luigi\\Desktop\\Third Year\\Thesis\\Artefact\\Data\\Model Predictions\\LSTM_predictions.csv', index=False)
-
 # Calculate Mean Squared Error (MSE)
-mse = mean_squared_error(test_data['Total_Crimes'], test_data['Predicted_Crimes'])
+mse = mean_squared_error(test_data['Total_Crimes'][:len(final_predictions)], test_data['Predicted_Crimes'][:len(final_predictions)])
 
 # Calculate Root Mean Squared Error (RMSE)
 rmse = np.sqrt(mse)
 
 # Calculate Mean Absolute Error (MAE)
-mae = np.mean(np.abs(test_data['Total_Crimes'] - test_data['Predicted_Crimes']))
+mae = np.mean(np.abs(test_data['Total_Crimes'][:len(final_predictions)] - test_data['Predicted_Crimes'][:len(final_predictions)]))
 
 # Calculate R-squared (R2)
-ss_res = np.sum((test_data['Total_Crimes'] - test_data['Predicted_Crimes'])**2)
-ss_tot = np.sum((test_data['Total_Crimes'] - np.mean(test_data['Total_Crimes']))**2)
+ss_res = np.sum((test_data['Total_Crimes'][:len(final_predictions)] - test_data['Predicted_Crimes'][:len(final_predictions)])**2)
+ss_tot = np.sum((test_data['Total_Crimes'][:len(final_predictions)] - np.mean(test_data['Total_Crimes'][:len(final_predictions)]))**2)
 r2 = 1 - (ss_res / ss_tot)
 
 # Calculate Pearson correlation coefficient (R)
-corr_coef = np.corrcoef(test_data['Total_Crimes'], test_data['Predicted_Crimes'])[0, 1]
+corr_coef = np.corrcoef(test_data['Total_Crimes'][:len(final_predictions)], test_data['Predicted_Crimes'][:len(final_predictions)])[0, 1]
 
 # Print error metrics
 print("Mean Squared Error (MSE):", mse)
