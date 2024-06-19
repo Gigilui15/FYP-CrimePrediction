@@ -396,7 +396,7 @@ class GISMap {
             if (choroplethLayer) {
                 this.map.removeLayer(choroplethLayer); // Remove existing heatmap layer
             }
-            this.applyChoroplethStyling(crimeCounts, 'Historic Data Heatmap'); // Add new heatmap layer
+            this.applyChoroplethStyling(crimeCounts, 'Historic Data Heatmap -'); // Add new heatmap layer
     
             // Reorder layers to ensure the "Choropleth Heatmap" layer is on top of the OSM layer but below the "Areas" and "Crime" layers
             const osmLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Open Street Map');
@@ -421,7 +421,7 @@ class GISMap {
 
         const crimeCounts = await this.fetchAndAggregatePredictionData();
         if (crimeCounts) {
-            this.applyChoroplethStyling(crimeCounts, 'Predictions Heatmap');
+            this.applyChoroplethStyling(crimeCounts, 'Predictions Heatmap -');
 
             const areasLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Areas');
             const crimesLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Crime');

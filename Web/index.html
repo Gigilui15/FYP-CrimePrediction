@@ -44,7 +44,7 @@
                     </select>                    
                 </div>
                 <div id="filter-options" style="font-size: small;">
-                    <h3>Crimes</h3>
+                    <h3>Crime Types</h3>
                     <input type="radio" id="all" name="filter" value="all" onclick="updateLayerFilter('all');" checked>
                     <label for="all">All Crimes</label>
                     <br>
@@ -79,10 +79,10 @@
                     <label for="Violation of Restraining/Court Order">Violation of Restraining/Court Order</label>
                 </div>
                 <div class="toc">
-                    <button id="generate-heatmap" class="heatmap-button">Generate Heatmap</button>
+                    <button id="generate-heatmap" class="heatmap-button" title="Applicable Filters include: Year, Month, Crime Type">Generate Heatmap using Historical Crime Data</button>
                 </div>
                 <div class="toc">
-                    <button id="generate-predictions-heatmap" class="heatmap-button">Generate Predictions Heatmap</button>
+                    <button id="generate-predictions-heatmap" class="heatmap-button" title="Applicable Filters include: Month and Crime Type; Year=2019">Generate Heatmap using 2019 Crime Predictions</button>
                 </div>  
                 <div id="area-filter-options" style="font-size: small;">
                     <h3>Areas</h3>
