@@ -89,31 +89,6 @@ class GISMap {
         document.getElementById('generate-heatmap').addEventListener('click', () => this.generateHeatmap());
     }
 
-    async generateCustomHeatmap() {
-        console.log('Generating custom heatmap...');
-        document.getElementById('loading-indicator').style.visibility = 'visible';
-
-        const crimeCounts = await this.fetchAndAggregateCrimeData();
-        if (crimeCounts) {
-            this.applyChoroplethStyling(crimeCounts, 'Custom Heatmap');
-
-            const areasLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Areas');
-            const crimesLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Crime');
-            if (areasLayer) areasLayer.setVisible(false);
-            if (crimesLayer) crimesLayer.setVisible(false);
-
-            const osmLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Open Street Map');
-            if (osmLayer) osmLayer.setZIndex(0);
-
-            localStorage.setItem('customHeatmapGenerated', 'true');
-            localStorage.setItem('customHeatmapCrimeCounts', JSON.stringify(crimeCounts));
-        } else {
-            console.error('No crime data available for custom heatmap styling');
-        }
-
-        document.getElementById('loading-indicator').style.visibility = 'hidden';
-    }
-
     async fetchAndAggregatePredictionData() {
         const url = 'http://localhost:8080/geoserver/CrimePrediction/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=CrimePrediction:LSTM_Predictions&outputFormat=application/json';
 
