@@ -403,14 +403,14 @@ class GISMap {
             console.error('Crime layer not found');
             return;
         }
-
+    
         const yearFilter = document.getElementById('year-filter').value;
         const monthFilter = document.getElementById('month-filter').value;
         const crimeTypeFilters = [];
         document.querySelectorAll('#filter-options input[type="checkbox"]:checked').forEach(checkbox => {
             crimeTypeFilters.push(`agg_id='${checkbox.value}'`);
         });
-
+    
         const cqlFilter = [];
         if (yearFilter) {
             cqlFilter.push(`year=${yearFilter}`);
@@ -421,43 +421,52 @@ class GISMap {
         if (crimeTypeFilters.length > 0) {
             cqlFilter.push(`(${crimeTypeFilters.join(' OR ')})`);
         }
-
+    
         const cqlFilterString = cqlFilter.length > 0 ? `&CQL_FILTER=${encodeURIComponent(cqlFilter.join(' AND '))}` : '';
         const url = `http://localhost:8080/geoserver/CrimePrediction/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=CrimePrediction:Crimes&outputFormat=application/json${cqlFilterString}`;
-
+    
         console.log('CQL Filter:', cqlFilterString);
         console.log('Fetch URL:', url);
-
+    
         try {
             const response = await fetch(url);
             const text = await response.text();
-
+    
             // Check if the response is JSON or XML
             if (text.startsWith('<')) {
                 console.error('Server returned an error:', text);
                 return;
             }
-
+    
             const data = JSON.parse(text);
             console.log('Data fetched:', data);
-
+    
             const features = new ol.format.GeoJSON().readFeatures(data);
             const crimeCounts = {};
-
+    
             features.forEach(feature => {
                 const area = feature.get('area');
-                if (!crimeCounts[area]) {
-                    crimeCounts[area] = 0;
+                const totalCrimes = 1;
+                const aggId = feature.get('agg_id');
+                const month = feature.get('month');
+    
+                // Log and aggregate the total crimes for all or selected crime categories
+                if (crimeTypeFilters.length === 0 || crimeTypeFilters.includes(`agg_id='${aggId}'`)) {
+                    console.log(`Area ID: ${area}, Total Crimes: ${totalCrimes}, Crime Category: ${aggId}, Month: ${month}`);
+    
+                    if (!crimeCounts[area]) {
+                        crimeCounts[area] = 0;
+                    }
+                    crimeCounts[area] += totalCrimes;
                 }
-                crimeCounts[area] += 1;
             });
-
+    
             console.log('Crime counts:', crimeCounts);
             return crimeCounts;
         } catch (error) {
             console.error('Error fetching and aggregating crime data:', error);
         }
-    }
+    }    
 
     async generateBothHeatmaps() {
         console.log('Generating both heatmaps...');
