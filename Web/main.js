@@ -9,19 +9,18 @@ class GISMap {
         this.searchManager = new SearchManager(this.map, this.popupManager);
         this.addCustomControls();
         this.addMousePositionControl();
-        // this.restoreHeatmapState(); // Comment out or remove this line
         this.addEventListeners();
     }
 
     addEventListeners() {
-        document.getElementById('generate-heatmap').addEventListener('click', () => this.generateCustomHeatmap());
+        document.getElementById('generate-heatmap').addEventListener('click', () => this.generateHeatmap());
         document.getElementById('generate-predictions-heatmap').addEventListener('click', () => this.generatePredictionsHeatmap());
     }
 
     initMap() {
         return new ol.Map({
             target: 'js-map',
-            layers: [],
+            layers: [], // Start with no layers
             view: new ol.View({
                 center: ol.proj.fromLonLat([-118.2437, 34.020]),
                 zoom: 10,
@@ -86,8 +85,7 @@ class GISMap {
 
     setupEventHandlers() {
         this.map.on('singleclick', evt => this.popupManager.handleMapClick(evt));
-        document.getElementById('generate-heatmap').addEventListener('click', () => this.generateHeatmap());
-    }     
+    }
 
     calculateQuantiles(crimeCounts, numClasses) {
         const values = Object.values(crimeCounts).sort((a, b) => a - b);
@@ -152,6 +150,7 @@ class GISMap {
             format: new ol.format.GeoJSON()
         });
 
+        // Remove existing heatmap layer if it exists
         const existingLayer = this.map.getLayers().getArray().find(l => l.get('title') === layerTitle);
         if (existingLayer) {
             this.map.removeLayer(existingLayer);
@@ -190,7 +189,7 @@ class GISMap {
         const fsButton = this.createFullscreenButton();
         const featureInfoButton = this.createFeatureInfoButton();
         const legendToggleButton = this.createLegendToggleButton(); // New button
-    
+
         this.map.addControl(homeButton);
         this.map.addControl(fsButton);
         this.map.addControl(featureInfoButton);
@@ -233,7 +232,7 @@ class GISMap {
     toggleLegend() {
         const legend = document.getElementById('legend');
         const toggleButton = document.getElementById('toggleLegendButton');
-    
+
         if (legend.style.display === 'none') {
             legend.style.display = 'block';
             toggleButton.classList.add('clicked');
@@ -292,7 +291,7 @@ class GISMap {
         document.querySelectorAll('#filter-options input[type="checkbox"]:checked').forEach(checkbox => {
             crimeTypeFilters.push(checkbox.value);
         });
-    
+
         const cqlFilter = [];
         if (monthFilter) {
             cqlFilter.push(`month=${monthFilter}`);
@@ -300,48 +299,48 @@ class GISMap {
         if (crimeTypeFilters.length > 0) {
             cqlFilter.push(`(${crimeTypeFilters.map(id => `agg_id='${id}'`).join(' OR ')})`);
         }
-    
+
         const cqlFilterString = cqlFilter.length > 0 ? `&CQL_FILTER=${encodeURIComponent(cqlFilter.join(' AND '))}` : '';
         const url = `http://localhost:8080/geoserver/CrimePrediction/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=CrimePrediction:LSTM_Predictions&outputFormat=application/json${cqlFilterString}`;
-    
+
         try {
             const response = await fetch(url);
             const text = await response.text();
-    
+
             // Check if the response is JSON or XML
             if (text.startsWith('<')) {
                 console.error('Server returned an error:', text);
                 alert('Error fetching prediction data. Please check the server response.');
                 return;
             }
-    
+
             const data = JSON.parse(text);
             const features = new ol.format.GeoJSON().readFeatures(data);
             const crimeCounts = {};
-    
+
             features.forEach(feature => {
                 const area = feature.get('area');
                 const totalCrimes = Math.round(feature.get('total_crimes'));
                 const aggId = feature.get('agg_id');
                 const month = feature.get('month');
-    
+
                 // Log and aggregate the total crimes for all or selected crime categories
                 if (crimeTypeFilters.length === 0 || crimeTypeFilters.includes(aggId.toString())) {
                     console.log(`Area ID: ${area}, Total Crimes: ${totalCrimes}, Crime Category: ${aggId}, Month: ${month}`);
-    
+
                     if (!crimeCounts[area]) {
                         crimeCounts[area] = 0;
                     }
                     crimeCounts[area] += totalCrimes;
                 }
             });
-    
+
             return crimeCounts;
         } catch (error) {
             console.error('Error fetching and aggregating prediction data:', error);
             alert('Error fetching prediction data. Please check the console for more details.');
         }
-    }    
+    }
 
     async fetchAndAggregateCrimeData() {
         console.log('Fetching and aggregating crime data...');
@@ -350,47 +349,47 @@ class GISMap {
             console.error('Crime layer not found');
             return;
         }
-    
+
         const yearFilter = document.getElementById('year-filter').value;
-        const monthFilter = document.getElementById('month-filter').value; // Add this line
+        const monthFilter = document.getElementById('month-filter').value;
         const crimeTypeFilters = [];
         document.querySelectorAll('#filter-options input[type="checkbox"]:checked').forEach(checkbox => {
             crimeTypeFilters.push(`agg_id='${checkbox.value}'`);
         });
-    
+
         const cqlFilter = [];
         if (yearFilter) {
             cqlFilter.push(`year=${yearFilter}`);
         }
         if (monthFilter) {
-            cqlFilter.push(`month=${monthFilter}`); // Add this line
+            cqlFilter.push(`month=${monthFilter}`);
         }
         if (crimeTypeFilters.length > 0) {
             cqlFilter.push(`(${crimeTypeFilters.join(' OR ')})`);
         }
-    
+
         const cqlFilterString = cqlFilter.length > 0 ? `&CQL_FILTER=${encodeURIComponent(cqlFilter.join(' AND '))}` : '';
         const url = `http://localhost:8080/geoserver/CrimePrediction/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=CrimePrediction:Crimes&outputFormat=application/json${cqlFilterString}`;
-    
+
         console.log('CQL Filter:', cqlFilterString);
         console.log('Fetch URL:', url);
-    
+
         try {
             const response = await fetch(url);
             const text = await response.text();
-    
+
             // Check if the response is JSON or XML
             if (text.startsWith('<')) {
                 console.error('Server returned an error:', text);
                 return;
             }
-    
+
             const data = JSON.parse(text);
             console.log('Data fetched:', data);
-    
+
             const features = new ol.format.GeoJSON().readFeatures(data);
             const crimeCounts = {};
-    
+
             features.forEach(feature => {
                 const area = feature.get('area');
                 if (!crimeCounts[area]) {
@@ -398,50 +397,40 @@ class GISMap {
                 }
                 crimeCounts[area] += 1;
             });
-    
+
             console.log('Crime counts:', crimeCounts);
             return crimeCounts;
         } catch (error) {
             console.error('Error fetching and aggregating crime data:', error);
         }
-    }  
+    }
 
     async generateHeatmap() {
         console.log('Generating heatmap...');
-    
+
         // Show loading indicator
         document.getElementById('loading-indicator').style.visibility = 'visible';
-    
+
         const crimeCounts = await this.fetchAndAggregateCrimeData();
         if (crimeCounts) {
-            this.applyChoroplethStyling(crimeCounts);
-    
-            // Toggle off the "Areas" and "Crimes" layers
+            this.applyChoroplethStyling(crimeCounts, 'Historical Data Heatmap');
+
             const areasLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Areas');
             const crimesLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Crime');
             if (areasLayer) areasLayer.setVisible(false);
             if (crimesLayer) crimesLayer.setVisible(false);
-    
-            // Ensure the "Choropleth Heatmap" layer is added and set its Z-index
-            const choroplethLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Historical Data Heatmap');
-            if (choroplethLayer) {
-                this.map.removeLayer(choroplethLayer); // Remove existing heatmap layer
-            }
-            this.applyChoroplethStyling(crimeCounts, 'Historic Data Heatmap'); // Add new heatmap layer
-    
-            // Reorder layers to ensure the "Choropleth Heatmap" layer is on top of the OSM layer but below the "Areas" and "Crime" layers
+
             const osmLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Open Street Map');
             if (osmLayer) osmLayer.setZIndex(0);
-    
-            // Save heatmap data and state to localStorage
+
             localStorage.setItem('heatmapGenerated', 'true');
             localStorage.setItem('heatmapCrimeCounts', JSON.stringify(crimeCounts));
             localStorage.setItem('areasLayerVisible', areasLayer.getVisible());
             localStorage.setItem('crimesLayerVisible', crimesLayer.getVisible());
         } else {
-            console.error('No crime data available for Historic Data Heatmap styling');
+            console.error('No crime data available for Historical Data Heatmap styling');
         }
-    
+
         // Hide loading indicator
         document.getElementById('loading-indicator').style.visibility = 'hidden';
     }
@@ -449,35 +438,35 @@ class GISMap {
     async generatePredictionsHeatmap() {
         console.log('Generating predictions heatmap...');
         document.getElementById('loading-indicator').style.visibility = 'visible';
-    
+
         const crimeCounts = await this.fetchAndAggregatePredictionData();
         if (crimeCounts) {
             this.applyChoroplethStyling(crimeCounts, 'Predictions Heatmap');
-    
+
             const areasLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Areas');
             const crimesLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Crime');
             if (areasLayer) areasLayer.setVisible(false);
             if (crimesLayer) crimesLayer.setVisible(false);
-    
+
             const osmLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Open Street Map');
             if (osmLayer) osmLayer.setZIndex(0);
-    
+
             localStorage.setItem('predictionsHeatmapGenerated', 'true');
             localStorage.setItem('predictionsHeatmapCrimeCounts', JSON.stringify(crimeCounts));
         } else {
-            console.error('No prediction data available for predictions heatmap styling');
+            console.error('No prediction data available for Predictions Heatmap styling');
         }
-    
+
         document.getElementById('loading-indicator').style.visibility = 'hidden';
-    }   
-    
+    }
+
     async generateCustomHeatmap() {
         console.log('Generating custom heatmap...');
         document.getElementById('loading-indicator').style.visibility = 'visible';
 
         const crimeCounts = await this.fetchAndAggregateCrimeData();
         if (crimeCounts) {
-            this.applyChoroplethStyling(crimeCounts, 'Historic Data Heatmap');
+            this.applyChoroplethStyling(crimeCounts, 'Historical Data Heatmap');
 
             const areasLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Areas');
             const crimesLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Crime');
@@ -495,7 +484,6 @@ class GISMap {
 
         document.getElementById('loading-indicator').style.visibility = 'hidden';
     }
-
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
