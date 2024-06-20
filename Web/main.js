@@ -1,3 +1,22 @@
+const monthNames = {
+    '01': 'January', '02': 'February', '03': 'March', '04': 'April',
+    '05': 'May', '06': 'June', '07': 'July', '08': 'August',
+    '09': 'September', '10': 'October', '11': 'November', '12': 'December'
+};
+
+const crimeNames = {
+    '400': 'Aggravated Assault',
+    '750': 'Burglary',
+    '1900': 'Damage of Asset',
+    '800': 'Identity Theft',
+    '850': 'Property Crimes',
+    '725': 'Robbery',
+    '300': 'Simple Assault',
+    '775': 'Theft',
+    '2400': 'Threats & Scares',
+    '1700': 'Violation of Court Order'
+};
+
 class GISMap {
     constructor() {
         this.map = this.initMap();
@@ -12,7 +31,7 @@ class GISMap {
         this.addEventListeners();
         this.hideLegends();
     }
-
+    
     addEventListeners() {
         document.getElementById('generate-both-heatmaps').addEventListener('click', () => this.generateBothHeatmaps());
     }
@@ -109,33 +128,45 @@ class GISMap {
         ];
     }
 
-    generateLegend(quantiles, colorRamp, layerTitle, legendId) {
+    generateLegend(quantiles, colorRamp, layerTitle, legendId, filterDetails) {
         const legend = document.getElementById(legendId);
         legend.innerHTML = `<h3>${layerTitle} - Legend</h3>`; // Reset legend content
-
+    
+        // Add filter details to the legend
+        if (filterDetails) {
+            const filterDetailsDiv = document.createElement('div');
+            filterDetailsDiv.className = 'legend-filter-details';
+    
+            // Update the filterDetails string to have the required bold formatting and commas
+            filterDetailsDiv.innerHTML = filterDetails;
+    
+            legend.appendChild(filterDetailsDiv);
+        }
+    
         for (let i = 0; i < quantiles.length - 1; i++) {
             const legendItem = document.createElement('div');
             legendItem.className = 'legend-item';
             legendItem.style.display = 'flex';
             legendItem.style.alignItems = 'center';
-
+    
             const colorBox = document.createElement('div');
             colorBox.style.width = '20px';
             colorBox.style.height = '20px';
             colorBox.style.backgroundColor = colorRamp[i];
             colorBox.style.marginRight = '10px';
-
+    
             const label = document.createElement('span');
             let lowerBound = quantiles[i];
             let upperBound = quantiles[i + 1];
-
+    
             label.textContent = `${Math.round(lowerBound)} - ${Math.round(upperBound)}`;
-
+    
             legendItem.appendChild(colorBox);
             legendItem.appendChild(label);
             legend.appendChild(legendItem);
         }
     }
+    
 
     hideLegends() {
         document.getElementById('historical-legend').style.display = 'none';
@@ -147,34 +178,49 @@ class GISMap {
         const numClasses = 7;
         const quantiles = this.calculateQuantiles(crimeCounts, numClasses);
         const colorRamp = this.generateColorRamp();
-
-        this.generateLegend(quantiles, colorRamp, layerTitle, legendId);
-
+    
+        // Get filter details and set the year to 2019 for predictions
+        const filters = this.layerControl.updateFilters();
+        const year = layerTitle === 'Predictions Heatmap' ? '2019' : filters.selectedYear || '2015-2019';
+        const month = filters.selectedMonth ? monthNames[filters.selectedMonth] : 'All';
+        const crimes = filters.selectedCrimeFilters.length ? filters.selectedCrimeFilters.map(id => crimeNames[id]).join(', ') : 'All';
+        const areaFilters = filters.selectedAreaFilters.length ? filters.selectedAreaFilters.join(', ') : 'All';
+    
+        // Format filter details for the legend with spacing between divs
+        const filterDetails = `<div style="margin-bottom: 5px;"><strong>Year:</strong> ${year}</div>
+                               <div style="margin-bottom: 5px;"><strong>Month:</strong> ${month}</div>
+                               <div><strong>Crimes:</strong> ${crimes}</div>`;
+    
+        // Only add area filters if they are not "All"
+        const finalFilterDetails = areaFilters !== 'All' ? `${filterDetails}<div>Areas: ${areaFilters}</div>` : filterDetails;
+    
+        this.generateLegend(quantiles, colorRamp, layerTitle, legendId, finalFilterDetails);
+    
         const source = new ol.source.Vector({
             url: 'http://localhost:8080/geoserver/CrimePrediction/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=CrimePrediction:Areas&outputFormat=application/json',
             format: new ol.format.GeoJSON()
         });
-
+    
         // Remove existing heatmap layer if it exists
         const existingLayer = this.map.getLayers().getArray().find(l => l.get('title') === layerTitle);
         if (existingLayer) {
             this.map.removeLayer(existingLayer);
         }
-
+    
         const newLayer = new ol.layer.Vector({
             source: source,
             style: feature => {
                 const area = feature.get('prec');
                 const count = crimeCounts[area] || 0;
                 let color = '#FFEDA0'; // Default color
-
+    
                 for (let i = 0; i < numClasses; i++) {
                     if (count <= quantiles[i + 1]) {
                         color = colorRamp[i];
                         break;
                     }
                 }
-
+    
                 return new ol.style.Style({
                     fill: new ol.style.Fill({ color: color }),
                     stroke: new ol.style.Stroke({ color: '#333', width: 1 })
@@ -182,12 +228,13 @@ class GISMap {
             },
             title: layerTitle
         });
-
+    
         this.map.addLayer(newLayer);
         newLayer.setZIndex(10);
-
+    
         console.log(`${layerTitle} styling applied`);
     }
+    
 
     addCustomControls() {
         const homeButton = this.createHomeButton();
@@ -414,10 +461,10 @@ class GISMap {
 
     async generateBothHeatmaps() {
         console.log('Generating both heatmaps...');
-
+    
         // Show loading indicator
         document.getElementById('loading-indicator').style.visibility = 'visible';
-
+    
         // Generate Historical Data Heatmap
         const historicalCrimeCounts = await this.fetchAndAggregateCrimeData();
         if (historicalCrimeCounts) {
@@ -425,7 +472,7 @@ class GISMap {
         } else {
             console.error('No crime data available for Historical Data Heatmap styling');
         }
-
+    
         // Generate Predictions Heatmap
         const predictedCrimeCounts = await this.fetchAndAggregatePredictionData();
         if (predictedCrimeCounts) {
@@ -433,9 +480,21 @@ class GISMap {
         } else {
             console.error('No prediction data available for Predictions Heatmap styling');
         }
-
+    
         // Hide loading indicator
         document.getElementById('loading-indicator').style.visibility = 'hidden';
+    
+        // Toggle the Crimes and Areas layers off
+        this.toggleLayerVisibility('Crime', false);
+        this.toggleLayerVisibility('Areas', false);
+    }
+    
+    // Helper function to toggle layer visibility
+    toggleLayerVisibility(layerTitle, visibility) {
+        const layer = this.map.getLayers().getArray().find(l => l.get('title') === layerTitle);
+        if (layer) {
+            layer.setVisible(visibility);
+        }
     }
 
     async generateHeatmap() {
