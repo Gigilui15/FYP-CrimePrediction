@@ -90,30 +90,47 @@ class GISMap {
     }
 
     async fetchAndAggregatePredictionData() {
-        const url = 'http://localhost:8080/geoserver/CrimePrediction/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=CrimePrediction:LSTM_Predictions&outputFormat=application/json';
-
+        // Retrieve filter values
+        const { selectedCrimeFilters, selectedMonth } = this.layerControl.updateFilters();
+    
+        // Construct CQL filter based on selected filters
+        const cqlFilter = [];
+        if (selectedMonth) {
+            cqlFilter.push(`month=${selectedMonth}`);
+        }
+        if (selectedCrimeFilters.length > 0) {
+            cqlFilter.push(`(${selectedCrimeFilters.map(filter => `crime_category='${filter}'`).join(' OR ')})`);
+        }
+    
+        const cqlFilterString = cqlFilter.length > 0 ? `&CQL_FILTER=${encodeURIComponent(cqlFilter.join(' AND '))}` : '';
+        const url = `http://localhost:8080/geoserver/CrimePrediction/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=CrimePrediction:LSTM_Predictions&outputFormat=application/json${cqlFilterString}`;
+    
         try {
             const response = await fetch(url);
             const data = await response.json();
-
+    
             const features = new ol.format.GeoJSON().readFeatures(data);
+            console.log('Features:', features); // Log the features
+    
             const crimeCounts = {};
-
+    
             features.forEach(feature => {
                 const area = feature.get('area');
-                const totalCrimes = feature.get('total_crimes');
+                const predictedCrimes = feature.get('predicted_crimes');
                 if (!crimeCounts[area]) {
                     crimeCounts[area] = 0;
                 }
-                crimeCounts[area] += totalCrimes;
+                crimeCounts[area] += predictedCrimes;
             });
-
+    
+            console.log('Aggregated Crime Counts:', crimeCounts); // Log the aggregated data
+    
             return crimeCounts;
         } catch (error) {
             console.error('Error fetching and aggregating prediction data:', error);
         }
-
     }
+    
 
     async fetchAndAggregateCrimeData() {
         console.log('Fetching and aggregating crime data...');
@@ -202,7 +219,7 @@ class GISMap {
 
     generateLegend(quantiles, colorRamp, layerTitle) {
         const legend = document.getElementById('legend');
-        legend.innerHTML = `<h3>${layerTitle} Legend</h3>`; // Reset legend content
+        legend.innerHTML = `<h3>${layerTitle} - Legend</h3>`; // Reset legend content
 
         for (let i = 0; i < quantiles.length - 1; i++) {
             const legendItem = document.createElement('div');
@@ -396,7 +413,7 @@ class GISMap {
             if (choroplethLayer) {
                 this.map.removeLayer(choroplethLayer); // Remove existing heatmap layer
             }
-            this.applyChoroplethStyling(crimeCounts, 'Historic Data Heatmap -'); // Add new heatmap layer
+            this.applyChoroplethStyling(crimeCounts, 'Historic Data Heatmap'); // Add new heatmap layer
     
             // Reorder layers to ensure the "Choropleth Heatmap" layer is on top of the OSM layer but below the "Areas" and "Crime" layers
             const osmLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Open Street Map');
@@ -421,7 +438,7 @@ class GISMap {
 
         const crimeCounts = await this.fetchAndAggregatePredictionData();
         if (crimeCounts) {
-            this.applyChoroplethStyling(crimeCounts, 'Predictions Heatmap -');
+            this.applyChoroplethStyling(crimeCounts, 'Predictions Heatmap');
 
             const areasLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Areas');
             const crimesLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Crime');
