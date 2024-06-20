@@ -113,7 +113,7 @@ class GISMap {
 
     generateLegend(quantiles, colorRamp, layerTitle) {
         const legend = document.getElementById('legend');
-        legend.innerHTML = `<h3>${layerTitle} Legend</h3>`; // Reset legend content
+        legend.innerHTML = `<h3>${layerTitle} - Legend</h3>`; // Reset legend content
 
         for (let i = 0; i < quantiles.length - 1; i++) {
             const legendItem = document.createElement('div');
@@ -423,11 +423,11 @@ class GISMap {
             if (crimesLayer) crimesLayer.setVisible(false);
     
             // Ensure the "Choropleth Heatmap" layer is added and set its Z-index
-            const choroplethLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Custom Heatmap');
+            const choroplethLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Historical Data Heatmap');
             if (choroplethLayer) {
                 this.map.removeLayer(choroplethLayer); // Remove existing heatmap layer
             }
-            this.applyChoroplethStyling(crimeCounts, 'Historic Data Heatmap -'); // Add new heatmap layer
+            this.applyChoroplethStyling(crimeCounts, 'Historic Data Heatmap'); // Add new heatmap layer
     
             // Reorder layers to ensure the "Choropleth Heatmap" layer is on top of the OSM layer but below the "Areas" and "Crime" layers
             const osmLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Open Street Map');
@@ -439,7 +439,7 @@ class GISMap {
             localStorage.setItem('areasLayerVisible', areasLayer.getVisible());
             localStorage.setItem('crimesLayerVisible', crimesLayer.getVisible());
         } else {
-            console.error('No crime data available for Custom Heatmap styling');
+            console.error('No crime data available for Historic Data Heatmap styling');
         }
     
         // Hide loading indicator
@@ -452,7 +452,7 @@ class GISMap {
     
         const crimeCounts = await this.fetchAndAggregatePredictionData();
         if (crimeCounts) {
-            this.applyChoroplethStyling(crimeCounts, 'Predictions Heatmap -');
+            this.applyChoroplethStyling(crimeCounts, 'Predictions Heatmap');
     
             const areasLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Areas');
             const crimesLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Crime');
@@ -477,7 +477,7 @@ class GISMap {
 
         const crimeCounts = await this.fetchAndAggregateCrimeData();
         if (crimeCounts) {
-            this.applyChoroplethStyling(crimeCounts, 'Custom Heatmap');
+            this.applyChoroplethStyling(crimeCounts, 'Historic Data Heatmap');
 
             const areasLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Areas');
             const crimesLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Crime');
