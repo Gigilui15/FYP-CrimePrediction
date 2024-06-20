@@ -2,13 +2,14 @@ class LayerControl {
     constructor(map) {
         this.map = map;
         this.initEventListeners();
+        this.createAreaCheckboxes(); // Ensure this is called to create the area checkboxes
     }
 
     initEventListeners() {
         document.getElementById('filter-options').addEventListener('change', event => this.handleFilterChange(event));
         document.getElementById('area-filter-options').addEventListener('change', event => this.handleAreaFilterChange(event));
         document.getElementById('year-filter').addEventListener('change', event => this.updateFilters());
-        document.getElementById('month-filter').addEventListener('change', event => this.updateFilters()); // Add this line
+        document.getElementById('month-filter').addEventListener('change', event => this.updateFilters());
     }
 
     handleFilterChange(event) {
@@ -57,14 +58,14 @@ class LayerControl {
         const selectedCrimeFilters = Array.from(document.querySelectorAll('input[type="checkbox"][name="filter"]:checked')).map(el => el.value);
         const selectedAreaFilters = Array.from(document.querySelectorAll('input[type="checkbox"][name="area-filter"]:checked')).map(el => el.value);
         const selectedYear = document.getElementById('year-filter').value;
-        const selectedMonth = document.getElementById('month-filter').value; // Add this line
+        const selectedMonth = document.getElementById('month-filter').value;
 
         const crimeFilterCondition = selectedCrimeFilters.length ? `(${selectedCrimeFilters.map(filter => `agg_id = '${filter}'`).join(' OR ')})` : '1=1';
         const areaFilterCondition = selectedAreaFilters.length ? `(${selectedAreaFilters.map(filter => `area = '${filter}'`).join(' OR ')})` : '1=1';
         const yearFilterCondition = selectedYear ? `year = ${selectedYear}` : '1=1';
-        const monthFilterCondition = selectedMonth ? `month = '${selectedMonth}'` : '1=1'; // Add this line
+        const monthFilterCondition = selectedMonth ? `month = '${selectedMonth}'` : '1=1';
 
-        const combinedFilter = `${crimeFilterCondition} AND ${areaFilterCondition} AND ${yearFilterCondition} AND ${monthFilterCondition}`; // Update this line
+        const combinedFilter = `${crimeFilterCondition} AND ${areaFilterCondition} AND ${yearFilterCondition} AND ${monthFilterCondition}`;
         this.updateLayerFilter(combinedFilter);
         this.updateAreaVisibility(selectedAreaFilters);
 
@@ -78,13 +79,13 @@ class LayerControl {
             allAreasRadio.checked = true;
         }
 
-        return { selectedCrimeFilters, selectedAreaFilters, selectedYear, selectedMonth }; // Update this line
+        return { selectedCrimeFilters, selectedAreaFilters, selectedYear, selectedMonth };
     }
 
     updateLayerFilter(filterCondition) {
         const layer = this.map.getLayers().getArray().find(l => l.get('title') === 'Crime');
         if (layer) {
-            const CQL_FILTER = filterCondition === '1=1 AND 1=1 AND 1=1 AND 1=1' ? null : filterCondition; // Update this line
+            const CQL_FILTER = filterCondition === '1=1 AND 1=1 AND 1=1 AND 1=1' ? null : filterCondition;
             layer.getSource().updateParams({ 'CQL_FILTER': CQL_FILTER });
             layer.getSource().refresh();
         }

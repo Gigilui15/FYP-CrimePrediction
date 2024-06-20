@@ -10,11 +10,11 @@ class GISMap {
         this.addCustomControls();
         this.addMousePositionControl();
         this.addEventListeners();
+        this.hideLegends();
     }
 
     addEventListeners() {
-        document.getElementById('generate-heatmap').addEventListener('click', () => this.generateHeatmap());
-        document.getElementById('generate-predictions-heatmap').addEventListener('click', () => this.generatePredictionsHeatmap());
+        document.getElementById('generate-both-heatmaps').addEventListener('click', () => this.generateBothHeatmaps());
     }
 
     initMap() {
@@ -109,8 +109,8 @@ class GISMap {
         ];
     }
 
-    generateLegend(quantiles, colorRamp, layerTitle) {
-        const legend = document.getElementById('legend');
+    generateLegend(quantiles, colorRamp, layerTitle, legendId) {
+        const legend = document.getElementById(legendId);
         legend.innerHTML = `<h3>${layerTitle} - Legend</h3>`; // Reset legend content
 
         for (let i = 0; i < quantiles.length - 1; i++) {
@@ -137,13 +137,18 @@ class GISMap {
         }
     }
 
-    applyChoroplethStyling(crimeCounts, layerTitle) {
+    hideLegends() {
+        document.getElementById('historical-legend').style.display = 'none';
+        document.getElementById('predicted-legend').style.display = 'none';
+    }
+
+    applyChoroplethStyling(crimeCounts, layerTitle, legendId) {
         console.log(`Applying ${layerTitle} styling...`);
         const numClasses = 7;
         const quantiles = this.calculateQuantiles(crimeCounts, numClasses);
         const colorRamp = this.generateColorRamp();
 
-        this.generateLegend(quantiles, colorRamp, layerTitle);
+        this.generateLegend(quantiles, colorRamp, layerTitle, legendId);
 
         const source = new ol.source.Vector({
             url: 'http://localhost:8080/geoserver/CrimePrediction/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=CrimePrediction:Areas&outputFormat=application/json',
@@ -188,31 +193,46 @@ class GISMap {
         const homeButton = this.createHomeButton();
         const fsButton = this.createFullscreenButton();
         const featureInfoButton = this.createFeatureInfoButton();
-        const legendToggleButton = this.createLegendToggleButton(); // New button
-
+        const legendToggleButton = this.createLegendToggleButton();
+    
         this.map.addControl(homeButton);
         this.map.addControl(fsButton);
         this.map.addControl(featureInfoButton);
-        this.map.addControl(legendToggleButton); // Add the new button
+        this.map.addControl(legendToggleButton);
     }
 
-    // Create the legend toggle button
     createLegendToggleButton() {
         const button = document.createElement('button');
         button.innerHTML = '<img src="./Images/legend.png" style="width:20px;filter:brightness(0) invert(0); vertical-align:middle"></img>';
         button.className = 'myButton';
         button.id = 'toggleLegendButton';
         button.title = 'Toggle Legend';
-
+    
         const element = document.createElement('div');
         element.className = 'legendToggleButton';
         element.appendChild(button);
-
+    
         button.addEventListener("click", () => {
             this.toggleLegend();
         });
-
+    
         return new ol.control.Control({ element: element });
+    }
+
+    toggleLegend() {
+        const historicalLegend = document.getElementById('historical-legend');
+        const predictedLegend = document.getElementById('predicted-legend');
+        const toggleButton = document.getElementById('toggleLegendButton');
+
+        if (historicalLegend.style.display === 'none' || predictedLegend.style.display === 'none') {
+            historicalLegend.style.display = 'block';
+            predictedLegend.style.display = 'block';
+            toggleButton.classList.add('clicked');
+        } else {
+            historicalLegend.style.display = 'none';
+            predictedLegend.style.display = 'none';
+            toggleButton.classList.remove('clicked');
+        }
     }
 
     createHomeButton() {
@@ -227,19 +247,6 @@ class GISMap {
         element.appendChild(button);
 
         return new ol.control.Control({ element: element });
-    }
-
-    toggleLegend() {
-        const legend = document.getElementById('legend');
-        const toggleButton = document.getElementById('toggleLegendButton');
-
-        if (legend.style.display === 'none') {
-            legend.style.display = 'block';
-            toggleButton.classList.add('clicked');
-        } else {
-            legend.style.display = 'none';
-            toggleButton.classList.remove('clicked');
-        }
     }
 
     createFullscreenButton() {
@@ -405,6 +412,32 @@ class GISMap {
         }
     }
 
+    async generateBothHeatmaps() {
+        console.log('Generating both heatmaps...');
+
+        // Show loading indicator
+        document.getElementById('loading-indicator').style.visibility = 'visible';
+
+        // Generate Historical Data Heatmap
+        const historicalCrimeCounts = await this.fetchAndAggregateCrimeData();
+        if (historicalCrimeCounts) {
+            this.applyChoroplethStyling(historicalCrimeCounts, 'Historical Data Heatmap', 'historical-legend');
+        } else {
+            console.error('No crime data available for Historical Data Heatmap styling');
+        }
+
+        // Generate Predictions Heatmap
+        const predictedCrimeCounts = await this.fetchAndAggregatePredictionData();
+        if (predictedCrimeCounts) {
+            this.applyChoroplethStyling(predictedCrimeCounts, 'Predictions Heatmap', 'predicted-legend');
+        } else {
+            console.error('No prediction data available for Predictions Heatmap styling');
+        }
+
+        // Hide loading indicator
+        document.getElementById('loading-indicator').style.visibility = 'hidden';
+    }
+
     async generateHeatmap() {
         console.log('Generating heatmap...');
 
@@ -488,5 +521,4 @@ class GISMap {
 
 document.addEventListener('DOMContentLoaded', async () => {
     const gisMap = new GISMap();
-    await gisMap.layerControl.createAreaCheckboxes(); // Ensure LayerControl has a reference to createAreaCheckboxes method
 });

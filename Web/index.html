@@ -79,11 +79,8 @@
                     <label for="Violation of Restraining/Court Order">Violation of Restraining/Court Order</label>
                 </div>
                 <div class="toc">
-                    <button id="generate-heatmap" class="heatmap-button" title="Applicable Filters include: Year, Month, Crime Type">Generate Heatmap using Historical Crime Data</button>
-                </div>
-                <div class="toc">
-                    <button id="generate-predictions-heatmap" class="heatmap-button" title="Applicable Filters include: Month and Crime Type; Year=2019">Generate Heatmap using 2019 Crime Predictions</button>
-                </div>  
+                    <button id="generate-both-heatmaps" class="heatmap-button" title="Generate both Historical Data and Predictions Heatmaps">Generate Both Heatmaps</button>
+                </div>                
                 <div id="area-filter-options" style="font-size: small;">
                     <h3>Areas</h3>
                     <!-- Dynamically generated checkboxes for each area -->
@@ -104,7 +101,10 @@
                     <div class="spinner"></div>
                 </div>
                 <div id="mouse-position" class="mouse-position"></div>
-                <div id="legend" class="legend" style="display: none;"></div>
+                <div id="legend-container">
+                    <div id="historical-legend" class="legend"></div>
+                    <div id="predicted-legend" class="legend"></div>
+                </div>                            
             </div>
         </div>
     </div>

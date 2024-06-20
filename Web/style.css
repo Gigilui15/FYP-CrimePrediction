@@ -416,16 +416,21 @@ body {
     100% { transform: rotate(360deg); }
 }
 
-.legend {
+#legend-container {
     position: absolute;
     bottom: 20px;
     left: 70px;
+    display: flex;
+    gap: 20px; /* Adjust the space between legends */
+    z-index: 10000;
+}
+
+.legend {
     background: rgba(255, 255, 255, 0.8);
     padding: 10px;
     border-radius: 4px;
     font-size: small;
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
-    z-index: 10000;
 }
 
 .legend h3 {
@@ -457,4 +462,8 @@ body {
     margin: auto auto auto 10px;
     bottom: 140px; 
     left: 10;
+}
+
+.legend:empty {
+    display: none;
 }
