@@ -206,21 +206,24 @@ class GISMap {
         if (existingLayer) {
             this.map.removeLayer(existingLayer);
         }
-    
+
         const newLayer = new ol.layer.Vector({
             source: source,
             style: feature => {
                 const area = feature.get('prec');
                 const count = crimeCounts[area] || 0;
                 let color = '#FFEDA0'; // Default color
-    
+
                 for (let i = 0; i < numClasses; i++) {
                     if (count <= quantiles[i + 1]) {
                         color = colorRamp[i];
                         break;
                     }
                 }
-    
+
+                // Set the total_crimes property on the feature
+                feature.set('total_crimes', count);
+
                 return new ol.style.Style({
                     fill: new ol.style.Fill({ color: color }),
                     stroke: new ol.style.Stroke({ color: '#333', width: 1 })
@@ -228,10 +231,10 @@ class GISMap {
             },
             title: layerTitle
         });
-    
+
         this.map.addLayer(newLayer);
         newLayer.setZIndex(10);
-    
+
         console.log(`${layerTitle} styling applied`);
     }
     
