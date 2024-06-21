@@ -53,6 +53,7 @@ class GISMap {
             { title: "Open Street Map", type: "base", url: "https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png" },
             { title: "Areas", type: "wms", url: "http://localhost:8080/geoserver/CrimePrediction/wms", params: { 'LAYERS': 'CrimePrediction:Areas', 'TILED': true } },
             { title: "Crime", type: "wms", url: "http://localhost:8080/geoserver/CrimePrediction/wms", params: { 'LAYERS': 'CrimePrediction:Crimes', 'TILED': true } },
+            { title: "Local CBD Lines", type: "wms", url: "http://localhost:8080/geoserver/CrimePrediction/wms", params: { 'LAYERS': 'CrimePrediction:Local CBD Lines', 'TILED': true }, visible: false }
         ];
 
         layersConfig.forEach(config => {
@@ -73,7 +74,6 @@ class GISMap {
             this.map.addLayer(layer);
         });
 
-        // Ensure OSM is at the bottom
         const osmLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Open Street Map');
         if (osmLayer) {
             osmLayer.setZIndex(0);
