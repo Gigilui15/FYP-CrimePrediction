@@ -1,9 +1,11 @@
+// Mapping month numbers to month names
 const monthNames = {
     '01': 'January', '02': 'February', '03': 'March', '04': 'April',
     '05': 'May', '06': 'June', '07': 'July', '08': 'August',
     '09': 'September', '10': 'October', '11': 'November', '12': 'December'
 };
 
+// Mapping crime codes to crime names
 const crimeNames = {
     '400': 'Aggravated Assault',
     '750': 'Burglary',
@@ -31,11 +33,8 @@ class GISMap {
         this.addEventListeners();
         this.hideLegends();
     }
-    
-    addEventListeners() {
-        document.getElementById('generate-both-heatmaps').addEventListener('click', () => this.generateBothHeatmaps());
-    }
 
+    // Initialise the OpenLayers map
     initMap() {
         return new ol.Map({
             target: 'js-map',
@@ -46,8 +45,9 @@ class GISMap {
                 minZoom: 10
             })
         });
-    }
+    }    
 
+    // Initialise map layers
     initLayers() {
         const layersConfig = [
             { title: "Open Street Map", type: "base", url: "https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png" },
@@ -80,6 +80,7 @@ class GISMap {
         }
     }
 
+    // Initialise map controls
     initControls() {
         const layerSwitcher = new ol.control.LayerSwitcher({
             activationMode: 'click',
@@ -89,6 +90,7 @@ class GISMap {
         this.map.addControl(layerSwitcher);
     }
 
+    // Adding mouse position control to the map
     addMousePositionControl() {
         const mousePositionControl = new ol.control.MousePosition({
             coordinateFormat: function(coordinate) {
@@ -102,75 +104,117 @@ class GISMap {
         this.map.addControl(mousePositionControl);
     }
 
+    // Set up event handlers for map interactions
     setupEventHandlers() {
         this.map.on('singleclick', evt => this.popupManager.handleMapClick(evt));
     }
 
-    calculateQuantiles(crimeCounts, numClasses) {
-        const values = Object.values(crimeCounts).sort((a, b) => a - b);
-        const quantiles = [];
-        for (let i = 0; i <= numClasses; i++) {
-            const index = Math.floor((values.length - 1) * i / numClasses);
-            quantiles.push(values[index]);
-        }
-        return quantiles;
+    // Add event listeners for UI elements
+    addEventListeners() {
+        document.getElementById('generate-both-heatmaps').addEventListener('click', () => this.generateBothHeatmaps());
     }
 
-    generateColorRamp() {
-        return [
-            '#ffffb2', // yellow
-            '#fecb5c', // light orange
-            '#fd9942', // orange
-            '#f6602d', // dark orange
-            '#ee2a23', // red
-            '#a20205', // dark red
-            '#620015'  // very dark red
-        ];
+    createHomeButton() {
+        const button = document.createElement('button');
+        button.innerHTML = '<img src="./Images/home.png" style="width:20px;filter:brightness(0) invert(0); vertical-align:middle"></img>';
+        button.className = 'myButton';
+        button.title = 'Home';
+        button.onclick = () => location.href = "index.html";
+
+        const element = document.createElement('div');
+        element.className = 'homeButtonDiv';
+        element.appendChild(button);
+
+        return new ol.control.Control({ element: element });
     }
 
-    generateLegend(quantiles, colorRamp, layerTitle, legendId, filterDetails) {
-        const legend = document.getElementById(legendId);
-        legend.innerHTML = `<h3>${layerTitle} - Legend</h3>`; // Reset legend content
+    createFullscreenButton() {
+        const button = document.createElement('button');
+        button.innerHTML = '<img src="./Images/fs.png" style="width:20px;filter:brightness(0) invert(0); vertical-align:middle"></img>';
+        button.className = 'myButton';
+        button.title = 'Toggle Map Fullscreen';
+        button.onclick = () => {
+            const mapElement = document.getElementById('js-map');
+            if (!document.fullscreenElement) {
+                mapElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+            button.firstChild.src = document.fullscreenElement ? './Images/fs.png' : './Images/ss.png';
+        };
+
+        const element = document.createElement('div');
+        element.className = 'fsButtonDiv';
+        element.appendChild(button);
+
+        return new ol.control.Control({ element: element });
+    }
+
+    createFeatureInfoButton() {
+        const button = document.createElement('button');
+        button.innerHTML = '<img id="featureImg" src="./Images/click.png" style="width:20px;filter:brightness(0) invert(0); vertical-align:middle"></img>';
+        button.className = 'myButton';
+        button.id = 'featureInfoButton';
+        button.title = 'Point Information & Heatmap Information';
+
+        const element = document.createElement('div');
+        element.className = 'featureInfoButton';
+        element.appendChild(button);
+
+        button.addEventListener("click", () => {
+            button.classList.toggle('clicked');
+            this.popupManager.toggleFeatureInfoFlag();
+        });
+
+        return new ol.control.Control({ element: element });
+    }
+
+    createLegendToggleButton() {
+        const button = document.createElement('button');
+        button.innerHTML = '<img src="./Images/legend.png" style="width:20px;filter:brightness(0) invert(0); vertical-align:middle"></img>';
+        button.className = 'myButton';
+        button.id = 'toggleLegendButton';
+        button.title = 'Toggle Legend';
     
-        // Add filter details to the legend
-        if (filterDetails) {
-            const filterDetailsDiv = document.createElement('div');
-            filterDetailsDiv.className = 'legend-filter-details';
+        const element = document.createElement('div');
+        element.className = 'legendToggleButton';
+        element.appendChild(button);
     
-            // Update the filterDetails string to have the required bold formatting and commas
-            filterDetailsDiv.innerHTML = filterDetails;
+        button.addEventListener("click", () => {
+            this.toggleLegend();
+        });
     
-            legend.appendChild(filterDetailsDiv);
-        }
-    
-        for (let i = 0; i < quantiles.length - 1; i++) {
-            const legendItem = document.createElement('div');
-            legendItem.className = 'legend-item';
-            legendItem.style.display = 'flex';
-            legendItem.style.alignItems = 'center';
-    
-            const colorBox = document.createElement('div');
-            colorBox.style.width = '20px';
-            colorBox.style.height = '20px';
-            colorBox.style.backgroundColor = colorRamp[i];
-            colorBox.style.marginRight = '10px';
-    
-            const label = document.createElement('span');
-            let lowerBound = quantiles[i];
-            let upperBound = quantiles[i + 1];
-    
-            label.textContent = `${Math.round(lowerBound)} - ${Math.round(upperBound)}`;
-    
-            legendItem.appendChild(colorBox);
-            legendItem.appendChild(label);
-            legend.appendChild(legendItem);
+        return new ol.control.Control({ element: element });
+    }
+
+    toggleLegend() {
+        const historicalLegend = document.getElementById('historical-legend');
+        const predictedLegend = document.getElementById('predicted-legend');
+        const toggleButton = document.getElementById('toggleLegendButton');
+
+        if (historicalLegend.style.display === 'none' || predictedLegend.style.display === 'none') {
+            historicalLegend.style.display = 'block';
+            predictedLegend.style.display = 'block';
+            toggleButton.classList.add('clicked');
+        } else {
+            historicalLegend.style.display = 'none';
+            predictedLegend.style.display = 'none';
+            toggleButton.classList.remove('clicked');
         }
     }
-    
 
-    hideLegends() {
-        document.getElementById('historical-legend').style.display = 'none';
-        document.getElementById('predicted-legend').style.display = 'none';
+    addCustomControls() {
+        const homeButton = this.createHomeButton();
+        const fsButton = this.createFullscreenButton();
+        const featureInfoButton = this.createFeatureInfoButton();
+        const legendToggleButton = this.createLegendToggleButton();
+    
+        this.map.addControl(homeButton);
+        this.map.addControl(fsButton);
+        this.map.addControl(featureInfoButton);
+        this.map.addControl(legendToggleButton);
     }
 
     applyChoroplethStyling(crimeCounts, layerTitle, legendId) {
@@ -237,108 +281,71 @@ class GISMap {
         newLayer.set('title', layerTitle);
         this.map.addLayer(newLayer);
     }    
-    
-    addCustomControls() {
-        const homeButton = this.createHomeButton();
-        const fsButton = this.createFullscreenButton();
-        const featureInfoButton = this.createFeatureInfoButton();
-        const legendToggleButton = this.createLegendToggleButton();
-    
-        this.map.addControl(homeButton);
-        this.map.addControl(fsButton);
-        this.map.addControl(featureInfoButton);
-        this.map.addControl(legendToggleButton);
+
+    calculateQuantiles(crimeCounts, numClasses) {
+        const values = Object.values(crimeCounts).sort((a, b) => a - b);
+        const quantiles = [];
+        for (let i = 0; i <= numClasses; i++) {
+            const index = Math.floor((values.length - 1) * i / numClasses);
+            quantiles.push(values[index]);
+        }
+        return quantiles;
     }
 
-    createLegendToggleButton() {
-        const button = document.createElement('button');
-        button.innerHTML = '<img src="./Images/legend.png" style="width:20px;filter:brightness(0) invert(0); vertical-align:middle"></img>';
-        button.className = 'myButton';
-        button.id = 'toggleLegendButton';
-        button.title = 'Toggle Legend';
-    
-        const element = document.createElement('div');
-        element.className = 'legendToggleButton';
-        element.appendChild(button);
-    
-        button.addEventListener("click", () => {
-            this.toggleLegend();
-        });
-    
-        return new ol.control.Control({ element: element });
+    generateColorRamp() {
+        return [
+            '#ffffb2', // yellow
+            '#fecb5c', // light orange
+            '#fd9942', // orange
+            '#f6602d', // dark orange
+            '#ee2a23', // red
+            '#a20205', // dark red
+            '#620015'  // very dark red
+        ];
     }
 
-    toggleLegend() {
-        const historicalLegend = document.getElementById('historical-legend');
-        const predictedLegend = document.getElementById('predicted-legend');
-        const toggleButton = document.getElementById('toggleLegendButton');
-
-        if (historicalLegend.style.display === 'none' || predictedLegend.style.display === 'none') {
-            historicalLegend.style.display = 'block';
-            predictedLegend.style.display = 'block';
-            toggleButton.classList.add('clicked');
-        } else {
-            historicalLegend.style.display = 'none';
-            predictedLegend.style.display = 'none';
-            toggleButton.classList.remove('clicked');
+    generateLegend(quantiles, colorRamp, layerTitle, legendId, filterDetails) {
+        const legend = document.getElementById(legendId);
+        legend.innerHTML = `<h3>${layerTitle} - Legend</h3>`; // Reset legend content
+    
+        // Add filter details to the legend
+        if (filterDetails) {
+            const filterDetailsDiv = document.createElement('div');
+            filterDetailsDiv.className = 'legend-filter-details';
+    
+            // Update the filterDetails string to have the required bold formatting and commas
+            filterDetailsDiv.innerHTML = filterDetails;
+    
+            legend.appendChild(filterDetailsDiv);
+        }
+    
+        for (let i = 0; i < quantiles.length - 1; i++) {
+            const legendItem = document.createElement('div');
+            legendItem.className = 'legend-item';
+            legendItem.style.display = 'flex';
+            legendItem.style.alignItems = 'center';
+    
+            const colorBox = document.createElement('div');
+            colorBox.style.width = '20px';
+            colorBox.style.height = '20px';
+            colorBox.style.backgroundColor = colorRamp[i];
+            colorBox.style.marginRight = '10px';
+    
+            const label = document.createElement('span');
+            let lowerBound = quantiles[i];
+            let upperBound = quantiles[i + 1];
+    
+            label.textContent = `${Math.round(lowerBound)} - ${Math.round(upperBound)}`;
+    
+            legendItem.appendChild(colorBox);
+            legendItem.appendChild(label);
+            legend.appendChild(legendItem);
         }
     }
-
-    createHomeButton() {
-        const button = document.createElement('button');
-        button.innerHTML = '<img src="./Images/home.png" style="width:20px;filter:brightness(0) invert(0); vertical-align:middle"></img>';
-        button.className = 'myButton';
-        button.title = 'Home';
-        button.onclick = () => location.href = "index.html";
-
-        const element = document.createElement('div');
-        element.className = 'homeButtonDiv';
-        element.appendChild(button);
-
-        return new ol.control.Control({ element: element });
-    }
-
-    createFullscreenButton() {
-        const button = document.createElement('button');
-        button.innerHTML = '<img src="./Images/fs.png" style="width:20px;filter:brightness(0) invert(0); vertical-align:middle"></img>';
-        button.className = 'myButton';
-        button.title = 'Toggle Map Fullscreen';
-        button.onclick = () => {
-            const mapElement = document.getElementById('js-map');
-            if (!document.fullscreenElement) {
-                mapElement.requestFullscreen();
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
-            }
-            button.firstChild.src = document.fullscreenElement ? './Images/fs.png' : './Images/ss.png';
-        };
-
-        const element = document.createElement('div');
-        element.className = 'fsButtonDiv';
-        element.appendChild(button);
-
-        return new ol.control.Control({ element: element });
-    }
-
-    createFeatureInfoButton() {
-        const button = document.createElement('button');
-        button.innerHTML = '<img id="featureImg" src="./Images/click.png" style="width:20px;filter:brightness(0) invert(0); vertical-align:middle"></img>';
-        button.className = 'myButton';
-        button.id = 'featureInfoButton';
-        button.title = 'Point Information & Heatmap Information';
-
-        const element = document.createElement('div');
-        element.className = 'featureInfoButton';
-        element.appendChild(button);
-
-        button.addEventListener("click", () => {
-            button.classList.toggle('clicked');
-            this.popupManager.toggleFeatureInfoFlag();
-        });
-
-        return new ol.control.Control({ element: element });
+    
+    hideLegends() {
+        document.getElementById('historical-legend').style.display = 'none';
+        document.getElementById('predicted-legend').style.display = 'none';
     }
 
     async fetchAndAggregatePredictionData() {
@@ -562,33 +569,9 @@ class GISMap {
 
         document.getElementById('loading-indicator').style.visibility = 'hidden';
     }
-
-    async generateCustomHeatmap() {
-        console.log('Generating custom heatmap...');
-        document.getElementById('loading-indicator').style.visibility = 'visible';
-
-        const crimeCounts = await this.fetchAndAggregateCrimeData();
-        if (crimeCounts) {
-            this.applyChoroplethStyling(crimeCounts, 'Historical Data Heatmap');
-
-            const areasLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Areas');
-            const crimesLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Crime');
-            if (areasLayer) areasLayer.setVisible(false);
-            if (crimesLayer) crimesLayer.setVisible(false);
-
-            const osmLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Open Street Map');
-            if (osmLayer) osmLayer.setZIndex(0);
-
-            localStorage.setItem('customHeatmapGenerated', 'true');
-            localStorage.setItem('customHeatmapCrimeCounts', JSON.stringify(crimeCounts));
-        } else {
-            console.error('No crime data available for custom heatmap styling');
-        }
-
-        document.getElementById('loading-indicator').style.visibility = 'hidden';
-    }
 }
 
+// Initialize the GISMap class 
 document.addEventListener('DOMContentLoaded', async () => {
     const gisMap = new GISMap();
 });
