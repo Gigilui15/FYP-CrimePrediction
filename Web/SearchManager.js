@@ -8,6 +8,7 @@ class SearchManager {
         this.setupInputEventHandler();
     }
 
+    // Set up event handlers for the search input field
     setupInputEventHandler() {
         this.searchInput.addEventListener('input', event => this.handleInput(event.target.value));
         this.searchInput.addEventListener('keypress', event => {
@@ -21,6 +22,7 @@ class SearchManager {
         });
     }
 
+    // Handle user input with debouncing to limit API calls
     handleInput(inputValue) {
         clearTimeout(this.debounceTimer);
         this.debounceTimer = setTimeout(() => {
@@ -28,13 +30,14 @@ class SearchManager {
         }, 300);
     }
 
+    // Fetch location suggestions from the API based on the user query
     fetchLocationSuggestions(query) {
         if (!query) {
             this.suggestionList.style.display = 'none';
             return;
         }
 
-        const bbox = '-118.6681900024414,33.70365524291992,-118.15536499023438,34.337310791015625'; // West, South, East, North
+        const bbox = '-118.6681900024414,33.70365524291992,-118.15536499023438,34.337310791015625'; // West, South, East, North (Limits of LA to ensure suggestions are in scope)
         const apiUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&bounded=1&viewbox=${bbox}`;
 
         fetch(apiUrl)
@@ -49,6 +52,7 @@ class SearchManager {
             .catch(error => console.error('Error fetching location suggestions:', error));
     }
 
+    // Display the fetched suggestions in the suggestion list
     displaySuggestions(suggestions) {
         this.suggestionList.innerHTML = '';
         suggestions.forEach(suggestion => {
@@ -60,6 +64,7 @@ class SearchManager {
         this.suggestionList.style.display = suggestions.length > 0 ? 'block' : 'none';
     }
 
+    // Handle the selection of a suggestion from the list
     selectSuggestion(suggestion) {
         const coordinate = ol.proj.fromLonLat([suggestion.lon, suggestion.lat]);
         this.map.getView().setCenter(coordinate);
