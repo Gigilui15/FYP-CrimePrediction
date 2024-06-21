@@ -2,9 +2,10 @@ class LayerControl {
     constructor(map) {
         this.map = map;
         this.initEventListeners();
-        this.createAreaCheckboxes(); // Ensure this is called to create the area checkboxes
+        this.createAreaCheckboxes();
     }
 
+    // Initialize event listeners for filter changes
     initEventListeners() {
         document.getElementById('filter-options').addEventListener('change', event => this.handleFilterChange(event));
         document.getElementById('area-filter-options').addEventListener('change', event => this.handleAreaFilterChange(event));
@@ -12,6 +13,7 @@ class LayerControl {
         document.getElementById('month-filter').addEventListener('change', event => this.updateFilters());
     }
 
+    // Handle changes in crime category filters
     handleFilterChange(event) {
         if (event.target.matches('input[type="checkbox"][name="filter"]')) {
             const allCrimesRadio = document.getElementById('all');
@@ -33,6 +35,7 @@ class LayerControl {
         }
     }
 
+    // Handle changes in area filters
     handleAreaFilterChange(event) {
         if (event.target.matches('input[type="checkbox"][name="area-filter"]')) {
             const allAreasRadio = document.getElementById('all-areas');
@@ -54,6 +57,7 @@ class LayerControl {
         }
     }
 
+    // Update filters based on selected criteria
     updateFilters() {
         const selectedCrimeFilters = Array.from(document.querySelectorAll('input[type="checkbox"][name="filter"]:checked')).map(el => el.value);
         const selectedAreaFilters = Array.from(document.querySelectorAll('input[type="checkbox"][name="area-filter"]:checked')).map(el => el.value);
@@ -82,6 +86,7 @@ class LayerControl {
         return { selectedCrimeFilters, selectedAreaFilters, selectedYear, selectedMonth };
     }
 
+    // Update the filter for the crime layer
     updateLayerFilter(filterCondition) {
         const layer = this.map.getLayers().getArray().find(l => l.get('title') === 'Crime');
         if (layer) {
@@ -91,6 +96,7 @@ class LayerControl {
         }
     }
 
+    // Update the visibility of the area layer based on selected areas
     updateAreaVisibility(selectedAreaFilters) {
         const areasLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Areas');
         if (areasLayer) {
@@ -104,6 +110,7 @@ class LayerControl {
         }
     }
 
+    // Fetch area names from the GeoServer
     async fetchAreaNames() {
         const url = 'http://localhost:8080/geoserver/CrimePrediction/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=CrimePrediction:Areas&outputFormat=application/json';
         try {
@@ -119,6 +126,7 @@ class LayerControl {
         }
     }
 
+    // Create checkboxes for each area
     async createAreaCheckboxes() {
         const areas = await this.fetchAreaNames();
         areas.sort((a, b) => a.name.localeCompare(b.name));
