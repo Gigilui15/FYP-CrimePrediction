@@ -178,30 +178,34 @@ class GISMap {
         const numClasses = 7;
         const quantiles = this.calculateQuantiles(crimeCounts, numClasses);
         const colorRamp = this.generateColorRamp();
-
-        // Get filter details and set the year to 2019 for predictions
+    
+        // Get filter details and set the year correctly for predictions
         const filters = this.layerControl.updateFilters();
-        const year = '2019'; // Always 2019 for predictions heatmap
+        let year = filters.selectedYear || '2015-2019'; // Default to '2015-2019' if no year is selected
+        if (layerTitle === 'Predictions Heatmap') {
+            year = '2019'; // Always 2019 for predictions heatmap
+        }
+        
         const month = filters.selectedMonth ? monthNames[filters.selectedMonth] : 'All';
         const crimes = filters.selectedCrimeFilters.length ? filters.selectedCrimeFilters.map(id => crimeNames[id]).join(', ') : 'All';
-
+    
         const filterDetails = `<div style="margin-bottom: 5px;"><strong>Year:</strong> ${year}</div>
                                <div style="margin-bottom: 5px;"><strong>Month:</strong> ${month}</div>
                                <div><strong>Crimes:</strong> ${crimes}</div>`;
-
+    
         this.generateLegend(quantiles, colorRamp, layerTitle, legendId, filterDetails);
-
+    
         const source = new ol.source.Vector({
             url: 'http://localhost:8080/geoserver/CrimePrediction/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=CrimePrediction:Areas&outputFormat=application/json',
             format: new ol.format.GeoJSON()
         });
-
+    
         // Remove existing heatmap layer if it exists
         const existingLayer = this.map.getLayers().getArray().find(l => l.get('title') === layerTitle);
         if (existingLayer) {
             this.map.removeLayer(existingLayer);
         }
-
+    
         const newLayer = new ol.layer.Vector({
             source: source,
             style: feature => {
@@ -209,34 +213,31 @@ class GISMap {
                 const count = crimeCounts[area] || 0;
                 const areaName = feature.get('Area');
                 let color = '#FFEDA0'; // Default color
-
+    
                 for (let i = 0; i < numClasses; i++) {
                     if (count <= quantiles[i + 1]) {
                         color = colorRamp[i];
                         break;
                     }
                 }
-
+    
                 // Set the properties on the feature
                 feature.set('total_crimes', count);
                 feature.set('area_name', areaName);
                 feature.set('month', month);
                 feature.set('crimes', crimes);
-
+    
                 return new ol.style.Style({
                     fill: new ol.style.Fill({ color: color }),
                     stroke: new ol.style.Stroke({ color: '#333', width: 1 })
                 });
-            },
-            title: layerTitle
+            }
         });
-
+    
+        newLayer.set('title', layerTitle);
         this.map.addLayer(newLayer);
-        newLayer.setZIndex(10);
-
-        console.log(`${layerTitle} styling applied`);
-    }
-
+    }    
+    
     addCustomControls() {
         const homeButton = this.createHomeButton();
         const fsButton = this.createFullscreenButton();
