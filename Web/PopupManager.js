@@ -3,7 +3,7 @@ class PopupManager {
         this.map = map;
         this.container = document.getElementById('popup');
         this.content = document.getElementById('popup-content');
-
+        
         this.header = document.createElement('div');
         this.header.className = 'popup-header';
         
@@ -64,11 +64,11 @@ class PopupManager {
         this.map.on('pointermove', evt => this.handleHover(evt));
     }
 
+    // Handle hover events over the map
     handleHover(evt) {
         const pixel = this.map.getEventPixel(evt.originalEvent);
         const feature = this.map.forEachFeatureAtPixel(pixel, feature => feature);
     
-        // Check if the Predictions Heatmap or the Historical Data Heatmap Layer is visible and the featureInfoFlag is true
         const predictionsLayer = this.map.getLayers().getArray().find(layer => layer.get('title') === 'Predictions Heatmap');
         const historicalLayer = this.map.getLayers().getArray().find(layer => layer.get('title') === 'Historical Data Heatmap');
 
@@ -96,12 +96,14 @@ class PopupManager {
             this.hideSimplePopup();
             this.removeClickedIndicator();
         }
-    }     
-    
+    }
+
+    // Update the content of the simple popup
     updateSimplePopupContent(htmlContent) {
         this.simpleContent.innerHTML = htmlContent;
     }
 
+    // Show the simple popup at a given coordinate
     showSimplePopup(coordinate, content = null) {
         if (content) {
             this.updateSimplePopupContent(content);
@@ -109,10 +111,12 @@ class PopupManager {
         this.simplePopup.setPosition(coordinate);
     }
 
+    // Hide the simple popup
     hideSimplePopup() {
         this.simplePopup.setPosition(undefined);
     }
 
+    // Add a clicked indicator at a given coordinate
     addClickedIndicator(coordinate) {
         if (this.clickedIndicator) {
             this.map.removeOverlay(this.clickedIndicator);
@@ -131,6 +135,7 @@ class PopupManager {
         this.map.addOverlay(this.clickedIndicator);
     }
 
+    // Remove the clicked indicator
     removeClickedIndicator() {
         if (this.clickedIndicator) {
             this.map.removeOverlay(this.clickedIndicator);
@@ -138,6 +143,7 @@ class PopupManager {
         }
     }
 
+    // Setup the close event handler for the popup
     setupCloseEventHandler() {
         this.closer.onclick = () => {
             this.hidePopup();
@@ -146,6 +152,7 @@ class PopupManager {
         };
     }
 
+    // Setup the remove event handler for the popup
     setupRemoveEventHandler() {
         this.removeButton.onclick = () => {
             this.hidePopup();
@@ -158,10 +165,12 @@ class PopupManager {
         };
     }
 
+    // Toggle the feature info flag
     toggleFeatureInfoFlag() {
         this.featureInfoFlag = !this.featureInfoFlag;
     }
 
+    // Handle map click events to show feature info
     handleMapClick(evt) {
         if (!this.featureInfoFlag) return;
 
@@ -208,10 +217,12 @@ class PopupManager {
         }
     }
 
+    // Update the content of the main popup
     updatePopupContent(htmlContent) {
         this.content.innerHTML = htmlContent;
     }
 
+    // Show the main popup at a given coordinate
     showPopup(coordinate, content = null) {
         if (content) {
             this.updatePopupContent(content);
@@ -221,12 +232,14 @@ class PopupManager {
         this.addPoint(coordinate);
     }
 
+    // Hide the main popup
     hidePopup() {
         this.popup.setPosition(undefined);
         this.popupShown = false;
         this.enablePointHover();
     }
 
+    // Add a point marker at a given coordinate
     addPoint(coordinate) {
         if (this.highlightOverlay) {
             this.map.removeOverlay(this.highlightOverlay);
@@ -253,7 +266,6 @@ class PopupManager {
             }
         });
 
-        // Add hover effect to change the color to green
         pointElement.addEventListener('mouseenter', () => {
             if (!this.popupShown) {
                 pointElement.style.backgroundColor = 'green';
@@ -267,6 +279,7 @@ class PopupManager {
         });
     }
 
+    // Disable hover effects on the point marker
     disablePointHover() {
         if (this.highlightOverlay) {
             const pointElement = this.highlightOverlay.getElement();
@@ -275,6 +288,7 @@ class PopupManager {
         }
     }
 
+    // Enable hover effects on the point marker
     enablePointHover() {
         if (this.highlightOverlay) {
             const pointElement = this.highlightOverlay.getElement();
@@ -283,10 +297,12 @@ class PopupManager {
         }
     }
 
+    // Event handler for entering hover state on point marker
     pointHoverEnter() {
         this.style.backgroundColor = 'green';
     }
 
+    // Event handler for leaving hover state on point marker
     pointHoverLeave() {
         this.style.backgroundColor = 'yellow';
     }
