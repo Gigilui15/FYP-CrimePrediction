@@ -178,29 +178,24 @@ class GISMap {
         const numClasses = 7;
         const quantiles = this.calculateQuantiles(crimeCounts, numClasses);
         const colorRamp = this.generateColorRamp();
-    
+
         // Get filter details and set the year to 2019 for predictions
         const filters = this.layerControl.updateFilters();
-        const year = layerTitle === 'Predictions Heatmap' ? '2019' : filters.selectedYear || '2015-2019';
+        const year = '2019'; // Always 2019 for predictions heatmap
         const month = filters.selectedMonth ? monthNames[filters.selectedMonth] : 'All';
         const crimes = filters.selectedCrimeFilters.length ? filters.selectedCrimeFilters.map(id => crimeNames[id]).join(', ') : 'All';
-        const areaFilters = filters.selectedAreaFilters.length ? filters.selectedAreaFilters.join(', ') : 'All';
-    
-        // Format filter details for the legend with spacing between divs
+
         const filterDetails = `<div style="margin-bottom: 5px;"><strong>Year:</strong> ${year}</div>
                                <div style="margin-bottom: 5px;"><strong>Month:</strong> ${month}</div>
                                <div><strong>Crimes:</strong> ${crimes}</div>`;
-    
-        // Only add area filters if they are not "All"
-        const finalFilterDetails = areaFilters !== 'All' ? `${filterDetails}<div>Areas: ${areaFilters}</div>` : filterDetails;
-    
-        this.generateLegend(quantiles, colorRamp, layerTitle, legendId, finalFilterDetails);
-    
+
+        this.generateLegend(quantiles, colorRamp, layerTitle, legendId, filterDetails);
+
         const source = new ol.source.Vector({
             url: 'http://localhost:8080/geoserver/CrimePrediction/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=CrimePrediction:Areas&outputFormat=application/json',
             format: new ol.format.GeoJSON()
         });
-    
+
         // Remove existing heatmap layer if it exists
         const existingLayer = this.map.getLayers().getArray().find(l => l.get('title') === layerTitle);
         if (existingLayer) {
@@ -212,6 +207,7 @@ class GISMap {
             style: feature => {
                 const area = feature.get('prec');
                 const count = crimeCounts[area] || 0;
+                const areaName = feature.get('Area');
                 let color = '#FFEDA0'; // Default color
 
                 for (let i = 0; i < numClasses; i++) {
@@ -221,8 +217,11 @@ class GISMap {
                     }
                 }
 
-                // Set the total_crimes property on the feature
+                // Set the properties on the feature
                 feature.set('total_crimes', count);
+                feature.set('area_name', areaName);
+                feature.set('month', month);
+                feature.set('crimes', crimes);
 
                 return new ol.style.Style({
                     fill: new ol.style.Fill({ color: color }),
@@ -237,7 +236,6 @@ class GISMap {
 
         console.log(`${layerTitle} styling applied`);
     }
-    
 
     addCustomControls() {
         const homeButton = this.createHomeButton();
@@ -328,7 +326,7 @@ class GISMap {
         button.innerHTML = '<img id="featureImg" src="./Images/click.png" style="width:20px;filter:brightness(0) invert(0); vertical-align:middle"></img>';
         button.className = 'myButton';
         button.id = 'featureInfoButton';
-        button.title = 'Point Information';
+        button.title = 'Point Information & Heatmap Information';
 
         const element = document.createElement('div');
         element.className = 'featureInfoButton';

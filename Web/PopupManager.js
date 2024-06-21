@@ -67,19 +67,38 @@ class PopupManager {
     handleHover(evt) {
         const pixel = this.map.getEventPixel(evt.originalEvent);
         const feature = this.map.forEachFeatureAtPixel(pixel, feature => feature);
-
-        if (feature && feature.get('total_crimes')) {
-            const coordinate = evt.coordinate;
-            const totalCrimes = feature.get('total_crimes');
-            const htmlContent = `<div class="popup-content"><h3>Total Crimes:</h3><p>${totalCrimes}</p></div>`;
-            this.showSimplePopup(coordinate, htmlContent);
-            this.addClickedIndicator(coordinate);
+    
+        // Check if the Predictions Heatmap Layer is visible and the featureInfoFlag is true
+        const predictionsLayer = this.map.getLayers().getArray().find(layer => layer.get('title') === 'Predictions Heatmap');
+        if (predictionsLayer && predictionsLayer.getVisible() && this.featureInfoFlag) {
+            if (feature && feature.get('total_crimes')) {
+                const coordinate = evt.coordinate;
+                const totalCrimes = feature.get('total_crimes');
+                const areaName = feature.get('area_name');
+                const month = feature.get('month');
+                const crimes = feature.get('crimes');
+                const year = '2019'; // Always for predictions heatmap
+    
+                const htmlContent = `
+                    <div class="popup-content">
+                        <div class="popup-row"><h3>Area Name:</h3><p>${areaName}</p></div>
+                        <div class="popup-row"><h3>Crimes:</h3><p>${crimes}</p></div>
+                        <div class="popup-row"><h3>Year:</h3><p>${year}</p></div>
+                        <div class="popup-row"><h3>Month:</h3><p>${month}</p></div>
+                        <div class="popup-row"><h3>Total Crimes:</h3><p>${totalCrimes}</p></div>
+                    </div>`;
+                this.showSimplePopup(coordinate, htmlContent);
+                this.addClickedIndicator(coordinate);
+            } else {
+                this.hideSimplePopup();
+                this.removeClickedIndicator();
+            }
         } else {
             this.hideSimplePopup();
             this.removeClickedIndicator();
         }
-    }
-
+    }     
+    
     updateSimplePopupContent(htmlContent) {
         this.simpleContent.innerHTML = htmlContent;
     }
