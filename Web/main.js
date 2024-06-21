@@ -34,11 +34,11 @@ class GISMap {
         this.hideLegends();
     }
 
-    // Initialise the OpenLayers map
+    // Initialising the OpenLayers map
     initMap() {
         return new ol.Map({
             target: 'js-map',
-            layers: [], // Start with no layers
+            layers: [], 
             view: new ol.View({
                 center: ol.proj.fromLonLat([-118.2437, 34.020]),
                 zoom: 10,
@@ -47,7 +47,7 @@ class GISMap {
         });
     }    
 
-    // Initialise map layers
+    // Initialising map layers
     initLayers() {
         const layersConfig = [
             { title: "Open Street Map", type: "base", url: "https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png" },
@@ -80,7 +80,7 @@ class GISMap {
         }
     }
 
-    // Initialise map controls
+    // Initialising map controls
     initControls() {
         const layerSwitcher = new ol.control.LayerSwitcher({
             activationMode: 'click',
@@ -90,7 +90,7 @@ class GISMap {
         this.map.addControl(layerSwitcher);
     }
 
-    // Adding mouse position control to the map
+    // Mouse position control to the map
     addMousePositionControl() {
         const mousePositionControl = new ol.control.MousePosition({
             coordinateFormat: function(coordinate) {
@@ -104,7 +104,7 @@ class GISMap {
         this.map.addControl(mousePositionControl);
     }
 
-    // Set up event handlers for map interactions
+    // Event handlers for map interactions
     setupEventHandlers() {
         this.map.on('singleclick', evt => this.popupManager.handleMapClick(evt));
     }
@@ -114,6 +114,7 @@ class GISMap {
         document.getElementById('generate-both-heatmaps').addEventListener('click', () => this.generateBothHeatmaps());
     }
 
+    // Home button to focus the map onto LA
     createHomeButton() {
         const button = document.createElement('button');
         button.innerHTML = '<img src="./Images/home.png" style="width:20px;filter:brightness(0) invert(0); vertical-align:middle"></img>';
@@ -128,6 +129,7 @@ class GISMap {
         return new ol.control.Control({ element: element });
     }
 
+    // Fullscreen button for the map
     createFullscreenButton() {
         const button = document.createElement('button');
         button.innerHTML = '<img src="./Images/fs.png" style="width:20px;filter:brightness(0) invert(0); vertical-align:middle"></img>';
@@ -152,6 +154,7 @@ class GISMap {
         return new ol.control.Control({ element: element });
     }
 
+    // Feature info button for the Heatmaps and Crime Points
     createFeatureInfoButton() {
         const button = document.createElement('button');
         button.innerHTML = '<img id="featureImg" src="./Images/click.png" style="width:20px;filter:brightness(0) invert(0); vertical-align:middle"></img>';
@@ -171,6 +174,7 @@ class GISMap {
         return new ol.control.Control({ element: element });
     }
 
+    //Creating the Legend Toggling Button for Heatmap Info
     createLegendToggleButton() {
         const button = document.createElement('button');
         button.innerHTML = '<img src="./Images/legend.png" style="width:20px;filter:brightness(0) invert(0); vertical-align:middle"></img>';
@@ -188,7 +192,8 @@ class GISMap {
     
         return new ol.control.Control({ element: element });
     }
-
+    
+    //Legend Toggling Function
     toggleLegend() {
         const historicalLegend = document.getElementById('historical-legend');
         const predictedLegend = document.getElementById('predicted-legend');
@@ -205,6 +210,7 @@ class GISMap {
         }
     }
 
+    // Add custom controls to the map
     addCustomControls() {
         const homeButton = this.createHomeButton();
         const fsButton = this.createFullscreenButton();
@@ -217,6 +223,7 @@ class GISMap {
         this.map.addControl(legendToggleButton);
     }
 
+    // Apply choropleth styling to the heatmap layer
     applyChoroplethStyling(crimeCounts, layerTitle, legendId) {
         console.log(`Applying ${layerTitle} styling...`);
         const numClasses = 7;
@@ -282,6 +289,7 @@ class GISMap {
         this.map.addLayer(newLayer);
     }    
 
+    // Calculate quantiles for choropleth mapping
     calculateQuantiles(crimeCounts, numClasses) {
         const values = Object.values(crimeCounts).sort((a, b) => a - b);
         const quantiles = [];
@@ -292,6 +300,7 @@ class GISMap {
         return quantiles;
     }
 
+    //The color ramp for the Heatmaps
     generateColorRamp() {
         return [
             '#ffffb2', // yellow
@@ -304,6 +313,7 @@ class GISMap {
         ];
     }
 
+    //Generating a Legend for the Heatmap
     generateLegend(quantiles, colorRamp, layerTitle, legendId, filterDetails) {
         const legend = document.getElementById(legendId);
         legend.innerHTML = `<h3>${layerTitle} - Legend</h3>`; // Reset legend content
@@ -343,11 +353,13 @@ class GISMap {
         }
     }
     
+    //Function to hide the Legend of each Heatmap
     hideLegends() {
         document.getElementById('historical-legend').style.display = 'none';
         document.getElementById('predicted-legend').style.display = 'none';
     }
 
+    // Fetch and aggregate prediction data for the predictions heatmap
     async fetchAndAggregatePredictionData() {
         const monthFilter = document.getElementById('month-filter').value;
         const crimeTypeFilters = [];
@@ -405,6 +417,7 @@ class GISMap {
         }
     }
 
+    // Fetch and aggregate prediction data for the historical data heatmap
     async fetchAndAggregateCrimeData() {
         console.log('Fetching and aggregating crime data...');
         const crimeLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Crime');
@@ -477,6 +490,7 @@ class GISMap {
         }
     }    
 
+    //Function to generate both predicted and historical data heatmaps at a time (To avoid comparing two different heatmaps) with the same filters (apart from "year" for the predictions heatmap).
     async generateBothHeatmaps() {
         console.log('Generating both heatmaps...');
     
@@ -513,61 +527,6 @@ class GISMap {
         if (layer) {
             layer.setVisible(visibility);
         }
-    }
-
-    async generateHeatmap() {
-        console.log('Generating heatmap...');
-
-        // Show loading indicator
-        document.getElementById('loading-indicator').style.visibility = 'visible';
-
-        const crimeCounts = await this.fetchAndAggregateCrimeData();
-        if (crimeCounts) {
-            this.applyChoroplethStyling(crimeCounts, 'Historical Data Heatmap');
-
-            const areasLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Areas');
-            const crimesLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Crime');
-            if (areasLayer) areasLayer.setVisible(false);
-            if (crimesLayer) crimesLayer.setVisible(false);
-
-            const osmLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Open Street Map');
-            if (osmLayer) osmLayer.setZIndex(0);
-
-            localStorage.setItem('heatmapGenerated', 'true');
-            localStorage.setItem('heatmapCrimeCounts', JSON.stringify(crimeCounts));
-            localStorage.setItem('areasLayerVisible', areasLayer.getVisible());
-            localStorage.setItem('crimesLayerVisible', crimesLayer.getVisible());
-        } else {
-            console.error('No crime data available for Historical Data Heatmap styling');
-        }
-
-        // Hide loading indicator
-        document.getElementById('loading-indicator').style.visibility = 'hidden';
-    }
-
-    async generatePredictionsHeatmap() {
-        console.log('Generating predictions heatmap...');
-        document.getElementById('loading-indicator').style.visibility = 'visible';
-
-        const crimeCounts = await this.fetchAndAggregatePredictionData();
-        if (crimeCounts) {
-            this.applyChoroplethStyling(crimeCounts, 'Predictions Heatmap');
-
-            const areasLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Areas');
-            const crimesLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Crime');
-            if (areasLayer) areasLayer.setVisible(false);
-            if (crimesLayer) crimesLayer.setVisible(false);
-
-            const osmLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Open Street Map');
-            if (osmLayer) osmLayer.setZIndex(0);
-
-            localStorage.setItem('predictionsHeatmapGenerated', 'true');
-            localStorage.setItem('predictionsHeatmapCrimeCounts', JSON.stringify(crimeCounts));
-        } else {
-            console.error('No prediction data available for Predictions Heatmap styling');
-        }
-
-        document.getElementById('loading-indicator').style.visibility = 'hidden';
     }
 }
 
