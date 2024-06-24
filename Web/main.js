@@ -40,7 +40,7 @@ class GISMap {
             target: 'js-map',
             layers: [], 
             view: new ol.View({
-                center: ol.proj.fromLonLat([-118.2437, 34.020]),
+                center: ol.proj.fromLonLat([-118.2437, 34.020]), // Center map on Los Angeles
                 zoom: 10,
                 minZoom: 10
             })
@@ -49,6 +49,7 @@ class GISMap {
 
     // Initialising map layers
     initLayers() {
+        // Configuration for different map layers
         const layersConfig = [
             { title: "Open Street Map", type: "base", url: "https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png" },
             { title: "Areas", type: "wms", url: "http://localhost:8080/geoserver/CrimePrediction/wms", params: { 'LAYERS': 'CrimePrediction:Areas', 'TILED': true } },
@@ -56,6 +57,7 @@ class GISMap {
             { title: "Local CBD Lines", type: "wms", url: "http://localhost:8080/geoserver/CrimePrediction/wms", params: { 'LAYERS': 'CrimePrediction:Local CBD Lines', 'TILED': true }, visible: false }
         ];
 
+        //Adding each configured layer to the map
         layersConfig.forEach(config => {
             let layer;
             if (config.type === "base") {
@@ -68,12 +70,13 @@ class GISMap {
                         params: config.params,
                         serverType: 'geoserver'
                     }),
-                    visible: config.visible !== undefined ? config.visible : true // Set visibility based on config, default to true
+                    visible: config.visible !== undefined ? config.visible : true // Setting visibility based on config, default to true
                 });
             }
             this.map.addLayer(layer);
         });
 
+        // Setting the z-index for the Open Street Map layer to ensure it is at the bottom
         const osmLayer = this.map.getLayers().getArray().find(l => l.get('title') === 'Open Street Map');
         if (osmLayer) {
             osmLayer.setZIndex(0);
@@ -82,10 +85,11 @@ class GISMap {
 
     // Initialising map controls
     initControls() {
+        // Layer switcher control to toggle layers
         const layerSwitcher = new ol.control.LayerSwitcher({
-            activationMode: 'click',
-            startActive: false,
-            groupSelectStyle: 'children'
+            activationMode: 'click', // Activation mode
+            startActive: false, // Start inactive
+            groupSelectStyle: 'children' // Selection style
         });
         this.map.addControl(layerSwitcher);
     }
@@ -99,7 +103,7 @@ class GISMap {
             projection: 'EPSG:4326',
             className: 'mouse-position',
             target: document.getElementById('mouse-position'),
-            undefinedHTML: 'Longitude: -, Latitude: -'
+            undefinedHTML: 'Longitude: -, Latitude: -' // Text when position is undefined
         });
         this.map.addControl(mousePositionControl);
     }
@@ -109,7 +113,7 @@ class GISMap {
         this.map.on('singleclick', evt => this.popupManager.handleMapClick(evt));
     }
 
-    // Add event listeners for UI elements
+    // Event listeners for UI elements
     addEventListeners() {
         document.getElementById('generate-both-heatmaps').addEventListener('click', () => this.generateBothHeatmaps());
     }
@@ -119,7 +123,7 @@ class GISMap {
         const button = document.createElement('button');
         button.innerHTML = '<img src="./Images/home.png" style="width:20px;filter:brightness(0) invert(0); vertical-align:middle"></img>';
         button.className = 'myButton';
-        button.title = 'Home';
+        button.title = 'Home'; // Tooltip text
         button.onclick = () => location.href = "index.html";
 
         const element = document.createElement('div');
@@ -134,17 +138,17 @@ class GISMap {
         const button = document.createElement('button');
         button.innerHTML = '<img src="./Images/fs.png" style="width:20px;filter:brightness(0) invert(0); vertical-align:middle"></img>';
         button.className = 'myButton';
-        button.title = 'Toggle Map Fullscreen';
+        button.title = 'Toggle Map Fullscreen'; // Tooltip text
         button.onclick = () => {
             const mapElement = document.getElementById('js-map');
             if (!document.fullscreenElement) {
-                mapElement.requestFullscreen();
+                mapElement.requestFullscreen(); // Request fullscreen mode
             } else {
                 if (document.exitFullscreen) {
-                    document.exitFullscreen();
+                    document.exitFullscreen(); // Exit fullscreen mode
                 }
             }
-            button.firstChild.src = document.fullscreenElement ? './Images/fs.png' : './Images/ss.png';
+            button.firstChild.src = document.fullscreenElement ? './Images/fs.png' : './Images/ss.png'; // Toggle icon button for fullscreen mode
         };
 
         const element = document.createElement('div');
@@ -160,15 +164,15 @@ class GISMap {
         button.innerHTML = '<img id="featureImg" src="./Images/click.png" style="width:20px;filter:brightness(0) invert(0); vertical-align:middle"></img>';
         button.className = 'myButton';
         button.id = 'featureInfoButton';
-        button.title = 'Point Information & Heatmap Information';
+        button.title = 'Point Information & Heatmap Information'; // Tooltip text
 
         const element = document.createElement('div');
         element.className = 'featureInfoButton';
         element.appendChild(button);
 
         button.addEventListener("click", () => {
-            button.classList.toggle('clicked');
-            this.popupManager.toggleFeatureInfoFlag();
+            button.classList.toggle('clicked'); // Toggle button class
+            this.popupManager.toggleFeatureInfoFlag(); // Toggle feature info flag
         });
 
         return new ol.control.Control({ element: element });
@@ -180,14 +184,14 @@ class GISMap {
         button.innerHTML = '<img src="./Images/legend.png" style="width:20px;filter:brightness(0) invert(0); vertical-align:middle"></img>';
         button.className = 'myButton';
         button.id = 'toggleLegendButton';
-        button.title = 'Toggle Legend';
+        button.title = 'Toggle Legend'; // Tooltip text
     
         const element = document.createElement('div');
         element.className = 'legendToggleButton';
         element.appendChild(button);
     
         button.addEventListener("click", () => {
-            this.toggleLegend();
+            this.toggleLegend(); // Toggle legend visibility on click
         });
     
         return new ol.control.Control({ element: element });
@@ -200,13 +204,13 @@ class GISMap {
         const toggleButton = document.getElementById('toggleLegendButton');
 
         if (historicalLegend.style.display === 'none' || predictedLegend.style.display === 'none') {
-            historicalLegend.style.display = 'block';
-            predictedLegend.style.display = 'block';
-            toggleButton.classList.add('clicked');
+            historicalLegend.style.display = 'block'; // Show historical legend
+            predictedLegend.style.display = 'block'; // Show predicted legend
+            toggleButton.classList.add('clicked'); // Add clicked class to button
         } else {
-            historicalLegend.style.display = 'none';
-            predictedLegend.style.display = 'none';
-            toggleButton.classList.remove('clicked');
+            historicalLegend.style.display = 'none'; // Hide historical legend
+            predictedLegend.style.display = 'none'; // Hide predicted legend
+            toggleButton.classList.remove('clicked'); // Remove clicked class from button
         }
     }
 
@@ -226,7 +230,7 @@ class GISMap {
     // Apply choropleth styling to the heatmap layer
     applyChoroplethStyling(crimeCounts, layerTitle, legendId) {
         console.log(`Applying ${layerTitle} styling...`);
-        const numClasses = 7;
+        const numClasses = 7; // Number of classes for heatmap color ramp range to be split into
         const quantiles = this.calculateQuantiles(crimeCounts, numClasses);
         const colorRamp = this.generateColorRamp();
     
@@ -279,14 +283,14 @@ class GISMap {
                 feature.set('crimes', crimes);
     
                 return new ol.style.Style({
-                    fill: new ol.style.Fill({ color: color }),
-                    stroke: new ol.style.Stroke({ color: '#333', width: 1 })
+                    fill: new ol.style.Fill({ color: color }), // Fill color based on crime count
+                    stroke: new ol.style.Stroke({ color: '#333', width: 1 }) // Stroke style
                 });
             }
         });
     
-        newLayer.set('title', layerTitle);
-        this.map.addLayer(newLayer);
+        newLayer.set('title', layerTitle); // Set layer title
+        this.map.addLayer(newLayer); // Add new layer to the map
     }    
 
     // Calculate quantiles for choropleth mapping
@@ -323,12 +327,12 @@ class GISMap {
             const filterDetailsDiv = document.createElement('div');
             filterDetailsDiv.className = 'legend-filter-details';
     
-            // Update the filterDetails string to have the required bold formatting and commas
-            filterDetailsDiv.innerHTML = filterDetails;
+            filterDetailsDiv.innerHTML = filterDetails;// Set filter details content
     
             legend.appendChild(filterDetailsDiv);
         }
     
+        // Add legend items for each quantile range
         for (let i = 0; i < quantiles.length - 1; i++) {
             const legendItem = document.createElement('div');
             legendItem.className = 'legend-item';
@@ -361,18 +365,18 @@ class GISMap {
 
     // Fetch and aggregate prediction data for the predictions heatmap
     async fetchAndAggregatePredictionData() {
-        const monthFilter = document.getElementById('month-filter').value;
+        const monthFilter = document.getElementById('month-filter').value; // Get selected month filter
         const crimeTypeFilters = [];
         document.querySelectorAll('#filter-options input[type="checkbox"]:checked').forEach(checkbox => {
-            crimeTypeFilters.push(checkbox.value);
+            crimeTypeFilters.push(checkbox.value); // Get selected crime type filters
         });
 
         const cqlFilter = [];
         if (monthFilter) {
-            cqlFilter.push(`month=${monthFilter}`);
+            cqlFilter.push(`month=${monthFilter}`); // Add month filter to CQL filter
         }
         if (crimeTypeFilters.length > 0) {
-            cqlFilter.push(`(${crimeTypeFilters.map(id => `agg_id='${id}'`).join(' OR ')})`);
+            cqlFilter.push(`(${crimeTypeFilters.map(id => `agg_id='${id}'`).join(' OR ')})`);  // Add crime type filters to CQL filter
         }
 
         const cqlFilterString = cqlFilter.length > 0 ? `&CQL_FILTER=${encodeURIComponent(cqlFilter.join(' AND '))}` : '';
@@ -426,22 +430,22 @@ class GISMap {
             return;
         }
     
-        const yearFilter = document.getElementById('year-filter').value;
-        const monthFilter = document.getElementById('month-filter').value;
+        const yearFilter = document.getElementById('year-filter').value; // Get selected year filter
+        const monthFilter = document.getElementById('month-filter').value; // Get selected month filter
         const crimeTypeFilters = [];
         document.querySelectorAll('#filter-options input[type="checkbox"]:checked').forEach(checkbox => {
-            crimeTypeFilters.push(`agg_id='${checkbox.value}'`);
+            crimeTypeFilters.push(`agg_id='${checkbox.value}'`); // Get selected crime type filters
         });
     
         const cqlFilter = [];
         if (yearFilter) {
-            cqlFilter.push(`year=${yearFilter}`);
+            cqlFilter.push(`year=${yearFilter}`);  // Add year filter to CQL filter
         }
         if (monthFilter) {
-            cqlFilter.push(`month=${monthFilter}`);
+            cqlFilter.push(`month=${monthFilter}`); // Add month filter to CQL filter
         }
         if (crimeTypeFilters.length > 0) {
-            cqlFilter.push(`(${crimeTypeFilters.join(' OR ')})`);
+            cqlFilter.push(`(${crimeTypeFilters.join(' OR ')})`); // Add crime type filters to CQL filter
         }
     
         const cqlFilterString = cqlFilter.length > 0 ? `&CQL_FILTER=${encodeURIComponent(cqlFilter.join(' AND '))}` : '';
