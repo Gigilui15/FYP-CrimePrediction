@@ -1,3 +1,10 @@
+//Function to Format the Popup Cases
+function format(str) {
+    return str.toLowerCase().replace(/\b\w/g, function(char) {
+        return char.toUpperCase();
+    });
+}
+
 class PopupManager {
     constructor(map) {
         this.map = map; // Reference to the map object
@@ -89,12 +96,12 @@ class PopupManager {
                 const crimes = feature.get('crimes');
                 //Popup Content
                 const htmlContent = `
-                    <div class="popup-content">
-                        <div class="popup-row"><h3>Area Name:</h3><p>${areaName}</p></div>
-                        <div class="popup-row"><h3>Crimes:</h3><p>${crimes}</p></div>
-                        <div class="popup-row"><h3>Month:</h3><p>${month}</p></div>
-                        <div class="popup-row"><h3>Total Crimes:</h3><p>${totalCrimes}</p></div>
-                    </div>`;
+                <div class="popup-content">
+                    <div class="popup-row"><h3>Area Name:</h3><p>${format(areaName)}</p></div>
+                    <div class="popup-row"><h3>Crimes:</h3><p>${format(crimes)}</p></div>
+                    <div class="popup-row"><h3>Month:</h3><p>${format(month)}</p></div>
+                    <div class="popup-row"><h3>Total Crimes:</h3><p>${totalCrimes}</p></div>
+                </div>`;
                 this.showSimplePopup(coordinate, htmlContent); // Show the heatmap popup with feature info
                 this.addClickedIndicator(coordinate); // Add an indicator at the clicked location
             } else {
@@ -205,13 +212,23 @@ class PopupManager {
                     if (json.features && json.features.length > 0) {
                         const feature = json.features[0];
                         const properties = feature.properties;
-                        //popup content
-                        const htmlContent = `<div class="popup-content-row"><h3>Date:</h3><p>${properties.date_occ}</p></div>
-                                             <div class="popup-content-row"><h3>Crime Type:</h3><p>${properties.agg_des}</p></div>
-                                             <div class="popup-content-row"><h3>Crime:</h3><p>${properties.crm_cd_des}</p></div>
-                                             <div class="popup-content-row"><h3>Area:</h3><p>${properties.area_name}</p></div>
-                                             <div class="popup-content-row"><h3>Premises:</h3><p>${properties.premis_des}</p></div>`;
-                        this.updatePopupContent(htmlContent); // Update the popup content with feature info
+                        const date = new Date(properties.date_occ);
+                        const formattedDate = date.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        });
+
+                        const htmlContent = `
+                        <div class="popup-content">
+                            <div class="popup-row"><h3>Date:</h3><p>${formattedDate}</p></div>
+                            <div class="popup-row"><h3>Crime Type:</h3><p>${format(properties.agg_des)}</p></div>
+                            <div class="popup-row"><h3>Crime:</h3><p>${format(properties.crm_cd_des)}</p></div>
+                            <div class="popup-row"><h3>Area:</h3><p>${format(properties.area_name)}</p></div>
+                            <div class="popup-row"><h3>Premises:</h3><p>${format(properties.premis_des)}</p></div>
+                        </div>`;
+                    this.updatePopupContent(htmlContent); // Update the popup content with feature info
+                     // Update the popup content with feature info
                         this.showPopup(evt.coordinate); // Show the popup at the clicked coordinate
                     } else {
                         this.popup.setPosition(undefined); // Hide the popup if no features found
