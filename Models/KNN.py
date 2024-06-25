@@ -5,57 +5,58 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import learning_curve
 from sklearn.ensemble import RandomForestRegressor
-# Load the training dataset
+
+# Loading the training dataset
 train_data = pd.read_csv(r'C:\\Users\\luigi\\Desktop\\Third Year\\Thesis\\Artefact\\Data\\train_set.csv')
 
-# Separate features and target variable for training set
+# Separating the features and target variable for training set
 X_train = train_data.drop(columns=['total_crimes'])
 y_train = train_data['total_crimes']
 
-# Train the model with K = 5
+# Training the model with K = 5
 best_knn_regressor = KNeighborsRegressor(n_neighbors=2, metric='cosine')
 best_knn_regressor.fit(X_train, y_train)
 
-# Predict on the training data
+# Predicting on the training data
 y_train_pred = best_knn_regressor.predict(X_train)
 
-# Load the test dataset
+# Loading the test dataset
 test_data = pd.read_csv(r'C:\\Users\\luigi\\Desktop\\Third Year\\Thesis\\Artefact\\Data\\test_set.csv')
 
-# Separate features and target variable for testing set
+# Separating the features and target variable for testing set
 X_test = test_data.drop(columns=['total_crimes'])
 y_test = test_data['total_crimes']
 
-# Predict on the test data
+# Predicting on the test data
 y_pred = best_knn_regressor.predict(X_test)
 
-# Add predictions as a new column in the test dataset
+# Adding predictions as a new column in the test dataset
 test_data['knn_predictions'] = y_pred
 
-# Now print the test dataset with the predictions
+# Printing the test dataset with the predictions
 print("\n Predictions:\n",test_data.head() ,"\n")  
 
-# Also save the predictions as a CSV
+# Saving the predictions as a CSV
 test_data.to_csv('C:\\Users\\luigi\\Desktop\\Third Year\\Thesis\\Artefact\\Data\\Model Predictions\\KNN_predictions.csv', index=False)
 
-# Calculate Mean Squared Error (MSE) for testing set
+# Calculating MSE for testing set
 mse = mean_squared_error(y_test, y_pred)
 print("\nTesting Set Metrics:")
 print("Mean Squared Error (MSE):", mse)
 
-# Calculate Root Mean Squared Error (RMSE) for testing set
+# Calculating RMSE for testing set
 rmse = np.sqrt(mse)
 print("Root Mean Squared Error (RMSE):", rmse)
 
-# Calculate Mean Absolute Error (MAE) for testing set
+# Calculating MAE for testing set
 mae = mean_absolute_error(y_test, y_pred)
 print("Mean Absolute Error (MAE):", mae)
 
-# Calculate R-squared (R2) for testing set
+# Calculating R2 for testing set
 r2 = r2_score(y_test, y_pred)
 print("R-squared (R2):", r2)
 
-# Calculate correlation coefficient (R) for testing set
+# Calculating R for testing set
 corr_coef = np.corrcoef(y_test, y_pred)[0, 1]
 print("Correlation Coefficient (R):", corr_coef)
 
@@ -70,7 +71,7 @@ plt.grid(True)
 plt.legend()
 plt.show()
 
-# Residual Plot
+# Residual Plot (Test Set)
 plt.figure(figsize=(10, 5))
 residuals = y_test - y_pred
 plt.scatter(y_pred, residuals, color='blue', alpha=0.5)
@@ -81,10 +82,10 @@ plt.ylabel('Residuals')
 plt.grid(True)
 plt.show()
 
-# Calculate residuals
+# Calculating residuals (Test Set)
 residuals = y_test - y_pred
 
-# Plot distribution of residuals
+# Plotting the distribution of residuals (Test Set)
 plt.figure(figsize=(10, 5))
 plt.hist(residuals, bins=20, color='blue', alpha=0.5)
 plt.title('Distribution of Residuals')
@@ -93,11 +94,12 @@ plt.ylabel('Frequency')
 plt.grid(True)
 plt.show()
 
-# Learning Curve
+# Learning Curve (Test Set)
 train_sizes, train_scores, test_scores = learning_curve(best_knn_regressor, X_train, y_train, cv=5, scoring='neg_mean_squared_error', n_jobs=-1)
 train_scores_mean = -np.mean(train_scores, axis=1)
 test_scores_mean = -np.mean(test_scores, axis=1)
 
+# Plotting the Learning Curve (Test Set)
 plt.figure(figsize=(10, 5))
 plt.plot(train_sizes, train_scores_mean, 'o-', color="r", label="Training error")
 plt.plot(train_sizes, test_scores_mean, 'o-', color="g", label="Cross-validation error")
@@ -108,20 +110,20 @@ plt.legend(loc="best")
 plt.grid(True)
 plt.show()
 
-# Feature Importance Plot
+# Feature Importance Plot 
 rf_regressor = RandomForestRegressor(n_estimators=100, random_state=42)
 rf_regressor.fit(X_train, y_train)
 
-# Get feature importances
+# Getting feature importances
 feature_importances = rf_regressor.feature_importances_
 
-# Get feature names
+# Getting feature names
 feature_names = X_train.columns
 
-# Sort feature importances in descending order
+# Sorting feature importances in descending order
 indices = feature_importances.argsort()[::-1]
 
-# Plot
+# Plotting Feature Importances 
 plt.figure(figsize=(10, 5))
 plt.title("Feature Importances")
 plt.bar(range(X_train.shape[1]), feature_importances[indices], align="center")

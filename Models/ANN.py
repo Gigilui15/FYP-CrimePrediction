@@ -20,11 +20,11 @@ tf.random.set_seed(74)
 # Ensure TensorFlow uses deterministic operations
 os.environ['TF_DETERMINISTIC_OPS'] = '1'
 
-# Load your data
+# Load the data
 data = pd.read_csv('C:\\Users\\luigi\\Desktop\\Third Year\\Thesis\\Artefact\\Data\\train_set.csv', header=0)
 data.columns = ['Area', 'Year', 'Month', 'Crime_Category', 'Total_Crimes']
 
-# Drop the 'Year' column since it's not used
+# Drop the 'Year' column 
 data.drop('Year', axis=1, inplace=True)
 
 # Preprocess the data using MinMaxScaler
@@ -61,7 +61,7 @@ model.add(Dense(1))
 optimizer = tf.keras.optimizers.Adam(learning_rate=0.0002)
 model.compile(loss='mae', optimizer=optimizer)
 
-# Fit the model with validation data
+# Fit the model 
 history = model.fit(X_train, y_train, epochs=1000, batch_size=29, validation_data=(X_val, y_val), verbose=1)
 
 # Save the trained model to a file

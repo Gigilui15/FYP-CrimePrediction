@@ -13,7 +13,7 @@ train_data = pd.read_csv('C:\\Users\\luigi\\Desktop\\Third Year\\Thesis\\Artefac
 train_data.drop('year', axis=1, inplace=True)
 
 # Define features and target variable for training data
-X_train = train_data[['month', 'area', 'agg_id']]  # Adjust column names if necessary
+X_train = train_data[['month', 'area', 'agg_id']]  
 y_train = train_data['total_crimes']
 
 # Feature scaling for training data
@@ -31,8 +31,8 @@ test_data = pd.read_csv('C:\\Users\\luigi\\Desktop\\Third Year\\Thesis\\Artefact
 test_data.drop('year', axis=1, inplace=True)
 
 # Define features for test data
-X_test = test_data[['month', 'area', 'agg_id']]  # Ensure the column names match those of the training set
-y_test = test_data['total_crimes']  # Actual crime numbers
+X_test = test_data[['month', 'area', 'agg_id']] #Features
+y_test = test_data['total_crimes']  # Actual crime totals
 
 # Feature scaling for test data using the same scaler as the training data
 X_test_scaled = scaler.transform(X_test)
@@ -85,9 +85,9 @@ plt.title('Histogram of Residuals')
 plt.grid(True)
 plt.show()
 
-# Optionally print the test data with predictions for visual comparison
+# Print the test data with predictions for visual comparison
 test_data['predicted_crimes'] = y_pred
 print(test_data)
 
-#Saving predictions since this is the best SVR model developed
+# Save predictions since this is the best SVR model developed
 test_data.to_csv('C:\\Users\\luigi\\Desktop\\Third Year\\Thesis\\Artefact\\Data\\Model Predictions\\SVR_predictions.csv', index=False)
