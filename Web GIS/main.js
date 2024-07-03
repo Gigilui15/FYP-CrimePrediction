@@ -237,7 +237,7 @@ class GISMap {
         // Get filter details and set the year correctly for predictions
         const filters = this.layerControl.updateFilters();
         let year = filters.selectedYear || '2015-2019'; // Default to '2015-2019' if no year is selected
-        if (layerTitle === 'Predictions Heatmap') {
+        if (layerTitle === '2019 Predictions Heatmap') {
             year = '2019'; // Always 2019 for predictions heatmap
         }
         
@@ -512,9 +512,9 @@ class GISMap {
         // Generate Predictions Heatmap
         const predictedCrimeCounts = await this.fetchAndAggregatePredictionData();
         if (predictedCrimeCounts) {
-            this.applyChoroplethStyling(predictedCrimeCounts, 'Predictions Heatmap', 'predicted-legend');
+            this.applyChoroplethStyling(predictedCrimeCounts, '2019 Predictions Heatmap', 'predicted-legend');
         } else {
-            console.error('No prediction data available for Predictions Heatmap styling');
+            console.error('No prediction data available for 2019 Predictions Heatmap styling');
         }
     
         // Hide loading indicator
